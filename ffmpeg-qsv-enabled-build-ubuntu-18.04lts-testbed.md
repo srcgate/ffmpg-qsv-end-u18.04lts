@@ -307,6 +307,73 @@ make -j$(nproc) install VERBOSE=1
 make -j$(nproc) distclean
 ```
 
+**Note:** If you need to enable OpenCL support for either libx264 or FFmpeg, ensure that:
+
+(a). The flag `--disable-opencl` is removed from libx264's configuration.
+
+(b). The flag `--enable-opencl` is present in FFmpeg's configure options.
+
+(c ). The prerequisite packages for OpenCL development are present:
+
+With OpenCL, the installable client drivers (ICDs) are normally issued with the accelerator's device drivers, namely:
+
+    1.The NVIDIA CUDA toolkit (and the device driver) for NVIDIA GPUs.
+    2. AMD's RoCM for GCN-class AMD hardware.
+    3. Intel's beignet and the newer Neo compute runtime.
+
+The purpose of the installable client driver model is to allow multiple OpenCL platforms to coexist on the same platform. That way, multiple OpenCL accelerators, be they discrete GPUs paired with a combination of FPGAs and integrated GPUs can all coexist.
+
+However, for linkage purposes, you'll require the ocl-icd package, which can be installed by:
+
+```
+sudo apt install ocl-icd-* 
+```
+Why ocl-icd? Simple: Whereas other ICDs may permit you to link against them directly, it is discouraged so as to limit the risk of unexpected runtime behavior. Assume ocl-icd to be the gold link target if your goal is to be platform-neutral as possible.
+
+**OpenCL in FFmpeg:**
+
+OpenCL's enablement in FFmpeg comes in two ways:
+
+(a):. Some encoders, such as `libx264`, if built with OpenCL enablement, can utilize these capabilities for accelerated lookahead functions. The performance impact for this enablement will vary with the GPU on the platform, and with older GPUs, may slow down the encoder. Lower power platforms such as specific AMD APUs and their SoCs may see modest performance improvements at best, but on modern, high performance GPUs, your mileage may vary. Expect no miracles. The reason OpenCL lookahead is available for this library in particular is that the lookahead algorithms for OpenCL are easily parallelized.
+
+For instance, you can combine the `-hwaccel auto` option which allows you to select the hardware-based accelerated decoding to use for the encode session with `libx264`. You can add this parameter with "auto" before input (if your x264 is compiled with OpenCL support you can try to add `-x264opts` param), for example:
+
+```
+ffmpeg -hwaccel auto -i input -vcodec libx264 -x264opts opencl output
+```
+
+(b):. FFmpeg, in particular, can utilize OpenCL with some filters, namely `program_opencl` and `opencl_src` as documented in the filters documentation, among others.
+
+See the sample command below:
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device 
+opencl=ocl:1.0 -filter_hw_device ocl -i 
+"cheeks.mkv" -an -map_metadata -1 -sws_flags 
+lanczos+accurate_rnd+full_chroma_int+full_chroma_inp -filter_complex 
+"[0:v]yadif=0:0:0,hwupload,unsharp_opencl=lx=3:ly=3:la=0.5:cx=3:cy=3:ca=0.5,hwdownload,setdar=dar=16/9" 
+ -r 25 -c:v h264_nvenc -preset:v llhq -bf 2 -g 50 -refs 3 -rc:v 
+vbr_hq -rc-lookahead:v 32 -coder:v cabac -movflags 
++faststart -profile:v high -level 4.1 -pixel_format yuv420p -y 
+"crunchy_cheeks.mp4"
+```
+
+**List OpenCL platform devices:***
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device list
+ffmpeg -hide_banner -v verbose -init_hw_device opencl
+ffmpeg -hide_banner -v verbose -init_hw_device opencl:1.0 
+```
+For the filter, see:
+```
+ffmpeg -hide_banner -v verbose -h filter=unsharp_opencl 
+```
+
+**Bonus score:** If you're adventurous, you could also try out this OpenCL build of libvpx from Ittiam systems, especially if you're using Integrated graphics or an FPGA (Xilinx): https://github.com/ittiamvpx/libvpx
+
+**Carrying on:**
+
 **(c ). Build and configure libx265:** This library provides a H.265/HEVC video encoder. See the [H.265 Encoding Guide](https://trac.ffmpeg.org/wiki/Encode/H.265) for more information and usage examples.
 
 ```
