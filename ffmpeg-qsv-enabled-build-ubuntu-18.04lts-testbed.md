@@ -404,7 +404,7 @@ make -j$(nproc) distclean
 
 ```
    cd ~/ffmpeg_sources
-   git clone https://chromium.googlesource.com/webm/libvpx
+   git clone https://github.com/webmproject/libvpx
    cd libvpx
    ./configure --prefix="$HOME/ffmpeg_build" --enable-runtime-cpu-detect --enable-vp9 --enable-vp8 \
    --enable-postproc --enable-vp9-postproc --enable-multi-res-encoding --enable-webm-io --enable-better-hw-compatibility --enable-vp9-highbitdepth --enable-onthefly-bitpacking --enable-realtime-only --cpu=native --as=nasm 
