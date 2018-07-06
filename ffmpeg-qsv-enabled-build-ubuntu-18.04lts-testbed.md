@@ -14,6 +14,12 @@ sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get -y dist-upgrade
 
 ```
 
+**Before you begin:**
+
+It is recommended that you build the Intel Neo OpenCL runtime, as shown [here](https://gist.github.com/Brainiarc7/1d13c7f432ba03a8e38720c83cd973d5).
+
+This will allow for Intel's MediaSDK OpenCL interop backend to be built. It's an optional step that can be safely skipped. However, its' strongly recommended if you need to evaluate that functionality.
+
 **Build the latest libva and all drivers from source:**
 
 
@@ -191,6 +197,8 @@ git pull
 
 (b). Configure the build with GCC:
 
+There are two options here, namely, using Intel's Perl builder configurator, or better still, the Cmake route:
+
 (i). For Apollo Lake:
 
 ```
@@ -216,6 +224,17 @@ make -j$(nproc) -C __cmake/intel64.make.release
 `cd __cmake/intel64.make.release`
 
 `sudo make -j$(nproc) install`
+
+**Recommended:** With the Cmake route:
+
+If you encounter errors above (with Intel's Perl configurator), use the CMake route below:
+
+```
+mkdir -p ~/vaapi/build_msdk
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_WAYLAND=ON -DENABLE_X11-DRI3=ON  ../msdk
+time make -j$(nproc) VERBOSE=1
+sudo make install -j$(nroc) VERBOSE=1
+```
 
 Apply this workaround:
 
