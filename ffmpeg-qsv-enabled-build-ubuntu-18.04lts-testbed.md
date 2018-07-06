@@ -389,6 +389,63 @@ For the filter, see:
 ffmpeg -hide_banner -v verbose -h filter=unsharp_opencl 
 ```
 
+**Example:**
+
+On my system, here's what I get with an Optimus-based laptop (without Bumblebee):
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device list
+Supported hardware device types:
+cuda
+vaapi
+qsv
+drm
+
+```
+And based on these platforms detected on my end:
+
+(a). QSV:
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device qsv
+[AVHWDeviceContext @ 0x559f67501440] Opened VA display via X11 display :1.
+[AVHWDeviceContext @ 0x559f67501440] libva: VA-API version 1.2.0
+[AVHWDeviceContext @ 0x559f67501440] libva: va_getDriverName() returns 0
+[AVHWDeviceContext @ 0x559f67501440] libva: User requested driver 'iHD'
+[AVHWDeviceContext @ 0x559f67501440] libva: Trying to open /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
+[AVHWDeviceContext @ 0x559f67501440] libva: Found init function __vaDriverInit_1_2
+[AVHWDeviceContext @ 0x559f67501440] libva: va_openDriver() returns 0
+[AVHWDeviceContext @ 0x559f67501440] Initialised VAAPI connection: version 1.2
+[AVHWDeviceContext @ 0x559f67501440] Unknown driver "Intel iHD driver - 2.0.0", assuming standard behaviour.
+[AVHWDeviceContext @ 0x559f67501040] Initialize MFX session: API version is 1.27, implementation version is 1.27
+[AVHWDeviceContext @ 0x559f67501040] MFX compile/runtime API: 1.27/1.27
+Hyper fast Audio and Video encoder
+```
+
+(b). VAAPI:
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device vaapi
+[AVHWDeviceContext @ 0x56362b64d040] Opened VA display via X11 display :1.
+[AVHWDeviceContext @ 0x56362b64d040] libva: VA-API version 1.2.0
+[AVHWDeviceContext @ 0x56362b64d040] libva: va_getDriverName() returns 0
+[AVHWDeviceContext @ 0x56362b64d040] libva: User requested driver 'iHD'
+[AVHWDeviceContext @ 0x56362b64d040] libva: Trying to open /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
+[AVHWDeviceContext @ 0x56362b64d040] libva: Found init function __vaDriverInit_1_2
+[AVHWDeviceContext @ 0x56362b64d040] libva: va_openDriver() returns 0
+[AVHWDeviceContext @ 0x56362b64d040] Initialised VAAPI connection: version 1.2
+[AVHWDeviceContext @ 0x56362b64d040] Unknown driver "Intel iHD driver - 2.0.0", assuming standard behaviour.
+```
+
+(c).
+
+
+
+
+
+
+
+
 **Bonus score:** If you're adventurous, you could also try out this OpenCL build of libvpx from Ittiam systems, especially if you're using Integrated graphics or an FPGA (Xilinx): https://github.com/ittiamvpx/libvpx
 
 **Carrying on:**
@@ -447,7 +504,7 @@ make -j$(nproc) distclean
    time make distclean
 ```
 
-**(g). Build FFmpeg:**
+**(g). Build FFmpeg (with OpeenCL enabled. If not needed, omit `--enable-opencl` option):**
 
 Notes on API support:
 
@@ -474,6 +531,7 @@ PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig:/opt/in
   --extra-ldflags="-L/opt/intel/mediasdk/plugins" \
   --enable-libmfx \
   --enable-vaapi \
+  --enable-opencl \
   --disable-debug \
   --enable-libvorbis \
   --enable-libvpx \
@@ -501,6 +559,8 @@ We only want the debug builds when an issue crops up and a gdb trace may be requ
 
 Confirm that the VAAPI & QSV-based encoders have been built successfully:
 
+(a). VAAPI:
+
 ```
 ffmpeg  -hide_banner -encoders | grep vaapi 
 
@@ -509,8 +569,20 @@ ffmpeg  -hide_banner -encoders | grep vaapi
  V..... mjpeg_vaapi          MJPEG (VAAPI) (codec mjpeg)
  V..... mpeg2_vaapi          MPEG-2 (VAAPI) (codec mpeg2video)
  V..... vp8_vaapi            VP8 (VAAPI) (codec vp8)
+ V..... vp9_vaapi            VP9 (VAAPI) (codec vp9)
 
 ```
+(b). QSV:
+
+```
+ V..... h264_qsv             H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10 (Intel Quick Sync Video acceleration) (codec h264)
+ V..... hevc_qsv             HEVC (Intel Quick Sync Video acceleration) (codec hevc)
+ V..... mjpeg_qsv            MJPEG (Intel Quick Sync Video acceleration) (codec mjpeg)
+ V..... mpeg2_qsv            MPEG-2 video (Intel Quick Sync Video acceleration) (codec mpeg2video)
+
+```
+
+
 
 See the help documentation for each encoder in question:
 
@@ -721,3 +793,54 @@ So, what has changed here? For one:
 
 (a). It does not offer encode entry points for VP8 and VP9 codecs (yet).
 (b). As mentioned above, HEVC encoding is for evaluation purposes only and will limit the encode to a mere 1000 frames.
+
+See the VAAPI features enabled with this iHD driver:
+
+```
+vainfo 
+libva info: VA-API version 1.2.0
+libva info: va_getDriverName() returns 0
+libva info: User requested driver 'iHD'
+libva info: Trying to open /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
+libva info: Found init function __vaDriverInit_1_2
+libva info: va_openDriver() returns 0
+vainfo: VA-API version: 1.2 (libva 2.2.1.pre1)
+vainfo: Driver version: Intel iHD driver - 2.0.0
+vainfo: Supported profile and entrypoints
+      VAProfileNone                   :	VAEntrypointVideoProc
+      VAProfileNone                   :	VAEntrypointStats
+      VAProfileMPEG2Simple            :	VAEntrypointVLD
+      VAProfileMPEG2Simple            :	VAEntrypointEncSlice
+      VAProfileMPEG2Main              :	VAEntrypointVLD
+      VAProfileMPEG2Main              :	VAEntrypointEncSlice
+      VAProfileH264Main               :	VAEntrypointVLD
+      VAProfileH264Main               :	VAEntrypointEncSlice
+      VAProfileH264Main               :	VAEntrypointFEI
+      VAProfileH264Main               :	VAEntrypointEncSliceLP
+      VAProfileH264High               :	VAEntrypointVLD
+      VAProfileH264High               :	VAEntrypointEncSlice
+      VAProfileH264High               :	VAEntrypointFEI
+      VAProfileH264High               :	VAEntrypointEncSliceLP
+      VAProfileVC1Simple              :	VAEntrypointVLD
+      VAProfileVC1Main                :	VAEntrypointVLD
+      VAProfileVC1Advanced            :	VAEntrypointVLD
+      VAProfileJPEGBaseline           :	VAEntrypointVLD
+      VAProfileJPEGBaseline           :	VAEntrypointEncPicture
+      VAProfileH264ConstrainedBaseline:	VAEntrypointVLD
+      VAProfileH264ConstrainedBaseline:	VAEntrypointEncSlice
+      VAProfileH264ConstrainedBaseline:	VAEntrypointFEI
+      VAProfileH264ConstrainedBaseline:	VAEntrypointEncSliceLP
+      VAProfileVP8Version0_3          :	VAEntrypointVLD
+      VAProfileHEVCMain               :	VAEntrypointVLD
+      VAProfileHEVCMain               :	VAEntrypointEncSlice
+      VAProfileHEVCMain               :	VAEntrypointFEI
+      VAProfileHEVCMain10             :	VAEntrypointVLD
+      VAProfileHEVCMain10             :	VAEntrypointEncSlice
+      VAProfileVP9Profile0            :	VAEntrypointVLD
+      VAProfileVP9Profile2            :	VAEntrypointVLD
+
+```
+
+Testing continues. 
+
+
