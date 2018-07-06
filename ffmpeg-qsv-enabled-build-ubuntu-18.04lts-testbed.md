@@ -400,6 +400,8 @@ cuda
 vaapi
 qsv
 drm
+opencl
+
 
 ```
 And based on these platforms detected on my end:
@@ -437,13 +439,48 @@ ffmpeg -hide_banner -v verbose -init_hw_device vaapi
 [AVHWDeviceContext @ 0x56362b64d040] Unknown driver "Intel iHD driver - 2.0.0", assuming standard behaviour.
 ```
 
-(c).
+(c). OpenCL:
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device opencl
+
+[AVHWDeviceContext @ 0x55dee05a2040] 0.0: NVIDIA CUDA / GeForce GTX 1070 with Max-Q Design
+[AVHWDeviceContext @ 0x55dee05a2040] 1.0: Intel(R) OpenCL HD Graphics / Intel(R) Gen9 HD Graphics NEO
+[AVHWDeviceContext @ 0x55dee05a2040] More than one matching device found.
+Device creation failed: -19.
+Failed to set value 'opencl' for option 'init_hw_device': No such device
+Error parsing global options: No such device
+```
+
+Now, you'll notice a platform init error for OpenCL, and that is because we did not pick up a specific device. 
+When done properly, for both devices, this is the output you should get:
+
+i. First OpenCL device:
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device opencl:1.0
+
+[AVHWDeviceContext @ 0x562f64b66040] 1.0: Intel(R) OpenCL HD Graphics / Intel(R) Gen9 HD Graphics NEO
+Hyper fast Audio and Video encoder
+
+```
+ii. Second OpenCL device:
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device opencl:0.1
+
+ffmpeg -hide_banner -v verbose -init_hw_device opencl:0.0
+[AVHWDeviceContext @ 0x55e7524fb040] 0.0: NVIDIA CUDA / GeForce GTX 1070 with Max-Q Design
 
 
+```
 
+Take note of the syntax used.
+On a platform with more than one OpenCL platform, the device ordinal must be selected from the OpenCL platform its' on, followed by the device index number. 
 
-
-
+Using the example above, you can see that this device has two OpenCL platforms, the Intel Neo stack and the NVIDIA CUDA stack.
+These platforms are `opencl:1` and `opencl:0` respectively.
+The devices are `opencl:1:1` and `opencl:0:0` respectively, where the first device ordinal is always zero (0).
 
 
 **Bonus score:** If you're adventurous, you could also try out this OpenCL build of libvpx from Ittiam systems, especially if you're using Integrated graphics or an FPGA (Xilinx): https://github.com/ittiamvpx/libvpx
@@ -510,9 +547,13 @@ Notes on API support:
 
 The hardware can be accessed through a number of different APIs:
 
-libmfx on Linux
+i.libmfx on Linux:
 
 > This is a library from Intel which can be installed as part of the Intel Media SDK, and supports a subset of encode and decode cases.
+
+ii.vaapi on Linux:
+
+> A fully opensource stack, dependent on libva and an appropriate VAAPI driver, that can be configured at runtime via the LIBVA-related environment variables (as shown above).
 
 In our use case, that is the backend that we will be using throughout this validation with this FFmpeg build:
 
