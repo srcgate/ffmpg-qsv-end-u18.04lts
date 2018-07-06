@@ -522,9 +522,12 @@ parallel -j 4 --verbose 'ffmpeg -loglevel debug -threads 4 -hwaccel vaapi -i "{}
 
 **FFmpeg QSV encoder usage notes:**
 
+I provide an example below that demonstrates the use of a complex filter chain with the QSV encoders in place for livestreaming purposes.
+Adapt as per your needs.
+
 **Complex Filter chain usage for variant stream encoding with Intel's QSV encoders:**
 
-Take the example snippet below:
+Take the example snippet below, which takes the safest (and not necessarily the fastest route), utilizing a hybrid encoder approach (partial hwaccel with significant processor load):
 
 ```
     ffmpeg -re -stream_loop -1 -threads n -loglevel debug -filter_complex_threads n \
@@ -642,6 +645,60 @@ Where `n` is the stream specifier id inherited from the complex filter chain. No
 
 The other arguments passed to the encoder are optimal for smooth streaming, enabling automatic detection and use of closed captions, an advanced [rate distortion algorithm](https://en.wikipedia.org/wiki/Rate%E2%80%93distortion_optimization) and sensible bitrates and profile limits per encoder variant.
 
-4. The open source iMSDK has a frame encoder limit of 1000 for the HEVC-based encoder, and as such, the HEVC encoder components should only be used for evaluation purposes. These that require these functions should consult the [proprietary licensed SDK](https://software.intel.com/en-us/media-sdk).
+**Special notes concerning performance:**
 
-5. The `iHD` libva driver also provides similar VAAPI functionality as the opensource `i965` driver. 
+If you're after a full hardware-accelerated transcode pipeline (use with caution as it may not work with all input formats), see the snippet below:
+
+```
+    ffmpeg -re -stream_loop -1 -threads n -loglevel debug -filter_complex_threads n \
+    -c:v h264_qsv \
+    -i 'udp://$stream_url:$port?fifo_size=9000000' \
+    -filter_complex "[0:v]split=6[s0][s1][s2][s3][s4][s5]; \
+    [s0]vpp_qsv=deinterlace=2,scale_qsv=1920:1080:format=nv12[v0]; \
+    [s1]vpp_qsv=deinterlace=2,scale_qsv=1280:720:format=nv12[v1];
+    [s2]vpp_qsv=deinterlace=2,scale_qsv=960:540:format=nv12[v2];
+    [s3]vpp_qsv=deinterlace=2,scale_qsv=842:480:format=nv12[v3];
+    [s4]vpp_qsv=deinterlace=2,scale_qsv=480:360:format=nv12[v4];
+    [s5]vpp_qsv=deinterlace=2,scale_qsv=426:240:format=nv12[v5]" \
+    -b:v:0 2250k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+    -b:v:1 1750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+    -b:v:2 1000k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+    -b:v:3 875k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+    -b:v:4 750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+    -b:v:5 640k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+    -c:a aac -b:a 128k -ar 48000 -ac 2 \
+    -flags -global_header -f tee -use_fifo 1 \
+    -map "[v0]" -map "[v1]" -map "[v2]" -map "[v3]" -map "[v4]" -map "[v5]" -map 0:a:0 -map 0:a:1 \
+    "[select=\'v:0,a\':f=mpegts]udp:$stream_url_out:$port_out| \
+    [select=\'v:0,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:0,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+    [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out"
+
+```
+
+So, what has changed here? For one:
+
+(a). We have selected an appropriate QSV-based decoder based on the video codec type in the ingest feed (h264), assigned as `-c:v h264_qsv` before declaring the input (`-i`). If the ingest feed is MPEG-2, select the MPEG decoder (`-c:v mpeg2_qsv`) instead.
+
+(b). We have dropped the manual H/W init (`-init_hw_device qsv=qsv:MFX_IMPL_hw_any -hwaccel qsv -filter_hw_device qsv`) and the hwupload video filter.
+
+4. The open source iMSDK has a frame encoder limit of 1000 for the HEVC-based encoder, and as such, the HEVC encoder components should only be used for evaluation purposes. These that require these functions should consult the [proprietary licensed SDK](https://software.intel.com/en-us/media-sdk). To specify the frame limit in ffmpeg, use the `-vframes n` option, where `n` is an integer.
+
+5. The `iHD` libva driver also provides similar VAAPI functionality as the opensource `i965` driver, with a few discrepancies:
+
+(a). It does not offer encode entry points for VP8 and VP9 codecs (yet).
+(b). As mentioned above, HEVC encoding is for evaluation purposes only and will limit the encode to a mere 1000 frames.
