@@ -472,7 +472,6 @@ ffmpeg -hide_banner -v verbose -init_hw_device opencl:0.1
 ffmpeg -hide_banner -v verbose -init_hw_device opencl:0.0
 [AVHWDeviceContext @ 0x55e7524fb040] 0.0: NVIDIA CUDA / GeForce GTX 1070 with Max-Q Design
 
-
 ```
 
 Take note of the syntax used.
@@ -779,11 +778,11 @@ The other arguments passed to the encoder are optimal for smooth streaming, enab
 
 **Special notes concerning performance:**
 
-If you're after a full hardware-accelerated transcode pipeline (use with caution as it may not work with all input formats), see the snippet below:
+If you're after a **full hardware-accelerated transcode pipeline** (use with caution as it may not work with all input formats), see the snippet below:
 
 ```
     ffmpeg -re -stream_loop -1 -threads n -loglevel debug -filter_complex_threads n \
-    -c:v h264_qsv \
+    -c:v h264_qsv -hwaccel qsv \
     -i 'udp://$stream_url:$port?fifo_size=9000000' \
     -filter_complex "[0:v]split=6[s0][s1][s2][s3][s4][s5]; \
     [s0]vpp_qsv=deinterlace=2,scale_qsv=1920:1080:format=nv12[v0]; \
@@ -824,7 +823,7 @@ If you're after a full hardware-accelerated transcode pipeline (use with caution
 
 So, what has changed here? For one:
 
-(a). We have selected an appropriate QSV-based decoder based on the video codec type in the ingest feed (h264), assigned as `-c:v h264_qsv` before declaring the input (`-i`). If the ingest feed is MPEG-2, select the MPEG decoder (`-c:v mpeg2_qsv`) instead.
+(a). We have selected an appropriate QSV-based decoder based on the video codec type in the ingest feed (h264), assigned as `-c:v h264_qsv` and the `-hwaccel qsv` as the hwaccel before declaring the input (`-i`). If the ingest feed is MPEG-2, select the MPEG decoder (`-c:v mpeg2_qsv`) instead.
 
 (b). We have dropped the manual H/W init (`-init_hw_device qsv=qsv:MFX_IMPL_hw_any -hwaccel qsv -filter_hw_device qsv`) and the hwupload video filter.
 
