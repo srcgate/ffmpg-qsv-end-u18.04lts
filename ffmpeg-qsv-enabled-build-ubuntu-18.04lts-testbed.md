@@ -95,7 +95,6 @@ Configure the project with cmake:
 ```
 cmake ../media-driver \
 -DMEDIA_VERSION="2.0.0" \
--DBUILD_ALONG_WITH_CMRTLIB=1 \
 -DBS_DIR_GMMLIB=$PWD/../gmmlib/Source/GmmLib/ \
 -DBS_DIR_COMMON=$PWD/../gmmlib/Source/Common/ \
 -DBS_DIR_INC=$PWD/../gmmlib/Source/inc/ \
