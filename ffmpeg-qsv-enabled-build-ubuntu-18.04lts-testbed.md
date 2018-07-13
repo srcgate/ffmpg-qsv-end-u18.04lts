@@ -1,8 +1,8 @@
 **Build FFmpeg with Intel's QSV enablement on an Intel-based validation test-bed:**
 
-Build platform: Ubuntu
+Build platform: Ubuntu 18.04LTS
 
-**Install baseline dependencies first**
+**Install baseline dependencies first (inclusive of OpenCL headers+)**
 
 `sudo apt-get -y install autoconf automake build-essential libass-dev libtool pkg-config texinfo zlib1g-dev libva-dev cmake mercurial libdrm-dev libvorbis-dev libogg-dev git libx11-dev libperl-dev libpciaccess-dev libpciaccess0 xorg-dev intel-gpu-tools opencl-headers ocl-icd-*`
 
@@ -11,17 +11,126 @@ Then add the Oibaf PPA, needed to install the latest development headers for lib
 ```
 sudo add-apt-repository ppa:oibaf/graphics-drivers
 sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get -y dist-upgrade
-
 ```
 
 **Before you begin:**
 
-It is recommended that you build the Intel Neo OpenCL runtime, as shown [here](https://gist.github.com/Brainiarc7/1d13c7f432ba03a8e38720c83cd973d5).
+It is recommended that you build the Intel Neo OpenCL runtime:
 
-This will allow for Intel's MediaSDK OpenCL interop backend to be built. It's an optional step that can be safely skipped. However, its' strongly recommended if you need to evaluate that functionality.
+**Justification:** This will allow for Intel's MediaSDK OpenCL inter-op back-end to be built. 
+
+**Install the dependencies for the OpenCL back-end:**
+
+**Build dependencies:**
+
+```
+sudo apt-get install ccache flex bison clang-4.0 cmake g++ git patch zlib1g-dev autoconf xutils-dev libtool pkg-config libpciaccess-dev
+```
+
+Create the project structure:
+```
+mkdir -p ~/intel-compute-runtime/workspace
+```
+
+Within this workspace directory, fetch the sources for the required dependencies:
+
+```
+cd ~/intel-compute-runtime/workspace
+
+git clone -b release_40 https://github.com/llvm-mirror/clang clang_source
+
+git clone https://github.com/intel/opencl-clang common_clang
+
+git clone https://github.com/intel/llvm-patches llvm_patches
+
+git clone -b release_40 https://github.com/llvm-mirror/llvm llvm_source
+
+git clone https://github.com/intel/gmmlib gmmlib
+
+git clone https://github.com/intel/intel-graphics-compiler igc
+
+git clone https://github.com/KhronosGroup/OpenCL-Headers khronos
+
+git clone https://github.com/intel/compute-runtime neo
+
+ln -s khronos opencl_headers
+```
+
+Create a build directory for the Intel Graphics Compiler under the workspace:
+
+```
+mkdir -p ~/intel-compute-runtime/workspace/build_igc
+```
+
+Then build:
+
+```
+cd ~/intel-compute-runtime/workspace/build_igc
+
+cmake -DIGC_OPTION__OUTPUT_DIR=../igc-install/Release \
+    -DCMAKE_BUILD_TYPE=Release -DIGC_OPTION__ARCHITECTURE_TARGET=Linux64 \
+    ../igc/IGC
+
+time make -j$(nproc) VERBOSE=1
+```
+
+**Recommended:** Generate Debian archives for installation:
+
+```
+time make -j$(nproc) package VERBOSE=1
+```
+
+Install:
+
+```
+sudo dpkg -i *.deb
+```
+
+(Ran in the build directory) will suffice.
+
+**Add LLVM-4.x to system path:**
+
+Append `/usr/lib/llvm-4.0/bin` at the end of the PATH variable in `/etc/environment` and source the file:
+
+```
+source /etc/environment
+```
+
+**Important:** Either way, make sure that LLVM 4.0 is in your path, as its' required by Intel's OCL runtime.
+
+Next, build and install the `compute runtime project`. Start by creating a separate build directory for it:
+
+```
+mkdir -p ~/intel-compute-runtime/workspace/build_icr
+
+cd ~/intel-compute-runtime/workspace/build_icr
+
+cmake -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release ../neo
+
+time make -j$(nproc) package VERBOSE=1
+```
+
+Then install the deb archives:
+
+```
+  sudo dpkg -i *.deb 
+```
+
+From the build directory.
+
+**Testing:**
+
+Use clinfo and confirm that the ICD is detected.
+
+Optionally, run [Luxmark](http://www.luxmark.info/) and confirm that Intel Neo's OpenCL platform is detected and usable.
+
+Be aware that Luxmark, among others, require `freeglut`, which you can install by running:
+
+```
+sudo apt install freeglut3*
+```
 
 **Build the latest libva and all drivers from source:**
-
 
 **Setup build environment:**
 
@@ -50,8 +159,6 @@ cd libva
 time make -j$(nproc) VERBOSE=1
 sudo make -j$(nproc) install
 sudo ldconfig -vvvv
-
-
 ```
 
 **2. [Gmmlib:](https://github.com/intel/gmmlib)**
@@ -70,8 +177,6 @@ mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE= Release -DARCH= 64 ../gmmlib
 make -j$(nproc)
-
-
 ```
 
 **3. [Intel Media driver:](https://github.com/intel/media-driver)**
@@ -86,8 +191,6 @@ git submodule init
 git pull
 mkdir -p ~/vaapi/workspace/build_media
 cd ~/vaapi/workspace/build_media
-
-
 ```
 
 Configure the project with cmake:
@@ -103,32 +206,24 @@ cmake ../media-driver \
 -DCMAKE_INSTALL_LIBDIR=/usr/lib/x86_64-linux-gnu \
 -DINSTALL_DRIVER_SYSCONF=OFF \
 -DLIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
-
-
 ```
 
 Then build the media driver:
 
 ```
 time make -j$(nproc) VERBOSE=1
-
-
 ```
 
 Then install the project:
 
 ```
 sudo make -j$(nproc) install VERBOSE=1
-
-
 ```
 
 Add yourself to the video group:
 
 ```
 sudo usermod -a -G video $USER
-
-
 ```
 
 Now, export environment variables as shown below:
@@ -136,7 +231,6 @@ Now, export environment variables as shown below:
 ```
 LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
 LIBVA_DRIVER_NAME=iHD
-
 ```
 
 Put that in `/etc/environment`.
@@ -178,6 +272,7 @@ SKL (Skylake)
 BXT (Broxton) / APL (Apollolake)
 
 CNL (Cannonlake)
+
 ```
 
 Unless explicitly listed, any platform not in that list should be considered as unsupported. For these platforms, stick to upstream VAAPI.
@@ -236,6 +331,8 @@ time make -j$(nproc) VERBOSE=1
 sudo make install -j$(nroc) VERBOSE=1
 ```
 
+CMake will automatically detect the platform you're on and enable the platform-specific hooks needed for a working build.
+
 Apply this workaround:
 
 ```
@@ -276,12 +373,14 @@ libdir=/opt/intel/mediasdk/lib
 includedir=/opt/intel/mediasdk/include
 Libs: -L${libdir} -lmfx -lstdc++ -ldl -lva -lstdc++ -ldl -lva-drm -ldrm
 Cflags: -I${includedir} -I/usr/include/libdrm
+
 ```
 
 When done, issue a reboot:
 
 ```
  sudo systemctl reboot
+
 ```
 
 **Known Issues and Limitations:**
@@ -312,6 +411,7 @@ cd nasm-2.14rc0
 make -j$(nproc) VERBOSE=1
 make -j$(nproc) install
 make -j$(nproc) distclean
+
 ```
 
 **(b). Build and deploy libx264 statically:** This library provides a H.264 video encoder. See the [H.264 Encoding Guide](https://trac.ffmpeg.org/wiki/Encode/H.264) for more information and usage examples. This requires ffmpeg to be configured with `--enable-gpl --enable-libx264`.
@@ -326,166 +426,6 @@ make -j$(nproc) install VERBOSE=1
 make -j$(nproc) distclean
 ```
 
-**Note:** If you need to enable OpenCL support for either libx264 or FFmpeg, ensure that:
-
-(a). The flag `--disable-opencl` is removed from libx264's configuration.
-
-(b). The flag `--enable-opencl` is present in FFmpeg's configure options.
-
-(c ). The prerequisite packages for OpenCL development are present:
-
-With OpenCL, the installable client drivers (ICDs) are normally issued with the accelerator's device drivers, namely:
-
-    1.The NVIDIA CUDA toolkit (and the device driver) for NVIDIA GPUs.
-    2. AMD's RoCM for GCN-class AMD hardware.
-    3. Intel's beignet and the newer Neo compute runtime.
-
-The purpose of the installable client driver model is to allow multiple OpenCL platforms to coexist on the same platform. That way, multiple OpenCL accelerators, be they discrete GPUs paired with a combination of FPGAs and integrated GPUs can all coexist.
-
-However, for linkage purposes, you'll require the ocl-icd package, which can be installed by:
-
-```
-sudo apt install ocl-icd-* 
-```
-Why ocl-icd? Simple: Whereas other ICDs may permit you to link against them directly, it is discouraged so as to limit the risk of unexpected runtime behavior. Assume ocl-icd to be the gold link target if your goal is to be platform-neutral as possible.
-
-**OpenCL in FFmpeg:**
-
-OpenCL's enablement in FFmpeg comes in two ways:
-
-(a):. Some encoders, such as `libx264`, if built with OpenCL enablement, can utilize these capabilities for accelerated lookahead functions. The performance impact for this enablement will vary with the GPU on the platform, and with older GPUs, may slow down the encoder. Lower power platforms such as specific AMD APUs and their SoCs may see modest performance improvements at best, but on modern, high performance GPUs, your mileage may vary. Expect no miracles. The reason OpenCL lookahead is available for this library in particular is that the lookahead algorithms for OpenCL are easily parallelized.
-
-For instance, you can combine the `-hwaccel auto` option which allows you to select the hardware-based accelerated decoding to use for the encode session with `libx264`. You can add this parameter with "auto" before input (if your x264 is compiled with OpenCL support you can try to add `-x264opts` param), for example:
-
-```
-ffmpeg -hwaccel auto -i input -vcodec libx264 -x264opts opencl output
-```
-
-(b):. FFmpeg, in particular, can utilize OpenCL with some filters, namely `program_opencl` and `opencl_src` as documented in the filters documentation, among others.
-
-See the sample command below:
-
-```
-ffmpeg -hide_banner -v verbose -init_hw_device 
-opencl=ocl:1.0 -filter_hw_device ocl -i 
-"cheeks.mkv" -an -map_metadata -1 -sws_flags 
-lanczos+accurate_rnd+full_chroma_int+full_chroma_inp -filter_complex 
-"[0:v]yadif=0:0:0,hwupload,unsharp_opencl=lx=3:ly=3:la=0.5:cx=3:cy=3:ca=0.5,hwdownload,setdar=dar=16/9" 
- -r 25 -c:v h264_nvenc -preset:v llhq -bf 2 -g 50 -refs 3 -rc:v 
-vbr_hq -rc-lookahead:v 32 -coder:v cabac -movflags 
-+faststart -profile:v high -level 4.1 -pixel_format yuv420p -y 
-"crunchy_cheeks.mp4"
-```
-
-**List OpenCL platform devices:***
-
-```
-ffmpeg -hide_banner -v verbose -init_hw_device list
-ffmpeg -hide_banner -v verbose -init_hw_device opencl
-ffmpeg -hide_banner -v verbose -init_hw_device opencl:1.0 
-```
-For the filter, see:
-```
-ffmpeg -hide_banner -v verbose -h filter=unsharp_opencl 
-```
-
-**Example:**
-
-On my system, here's what I get with an Optimus-based laptop (without Bumblebee):
-
-```
-ffmpeg -hide_banner -v verbose -init_hw_device list
-Supported hardware device types:
-cuda
-vaapi
-qsv
-drm
-opencl
-
-
-```
-And based on these platforms detected on my end:
-
-(a). QSV:
-
-```
-ffmpeg -hide_banner -v verbose -init_hw_device qsv
-[AVHWDeviceContext @ 0x559f67501440] Opened VA display via X11 display :1.
-[AVHWDeviceContext @ 0x559f67501440] libva: VA-API version 1.2.0
-[AVHWDeviceContext @ 0x559f67501440] libva: va_getDriverName() returns 0
-[AVHWDeviceContext @ 0x559f67501440] libva: User requested driver 'iHD'
-[AVHWDeviceContext @ 0x559f67501440] libva: Trying to open /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
-[AVHWDeviceContext @ 0x559f67501440] libva: Found init function __vaDriverInit_1_2
-[AVHWDeviceContext @ 0x559f67501440] libva: va_openDriver() returns 0
-[AVHWDeviceContext @ 0x559f67501440] Initialised VAAPI connection: version 1.2
-[AVHWDeviceContext @ 0x559f67501440] Unknown driver "Intel iHD driver - 2.0.0", assuming standard behaviour.
-[AVHWDeviceContext @ 0x559f67501040] Initialize MFX session: API version is 1.27, implementation version is 1.27
-[AVHWDeviceContext @ 0x559f67501040] MFX compile/runtime API: 1.27/1.27
-Hyper fast Audio and Video encoder
-```
-
-(b). VAAPI:
-
-```
-ffmpeg -hide_banner -v verbose -init_hw_device vaapi
-[AVHWDeviceContext @ 0x56362b64d040] Opened VA display via X11 display :1.
-[AVHWDeviceContext @ 0x56362b64d040] libva: VA-API version 1.2.0
-[AVHWDeviceContext @ 0x56362b64d040] libva: va_getDriverName() returns 0
-[AVHWDeviceContext @ 0x56362b64d040] libva: User requested driver 'iHD'
-[AVHWDeviceContext @ 0x56362b64d040] libva: Trying to open /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
-[AVHWDeviceContext @ 0x56362b64d040] libva: Found init function __vaDriverInit_1_2
-[AVHWDeviceContext @ 0x56362b64d040] libva: va_openDriver() returns 0
-[AVHWDeviceContext @ 0x56362b64d040] Initialised VAAPI connection: version 1.2
-[AVHWDeviceContext @ 0x56362b64d040] Unknown driver "Intel iHD driver - 2.0.0", assuming standard behaviour.
-```
-
-(c). OpenCL:
-
-```
-ffmpeg -hide_banner -v verbose -init_hw_device opencl
-
-[AVHWDeviceContext @ 0x55dee05a2040] 0.0: NVIDIA CUDA / GeForce GTX 1070 with Max-Q Design
-[AVHWDeviceContext @ 0x55dee05a2040] 1.0: Intel(R) OpenCL HD Graphics / Intel(R) Gen9 HD Graphics NEO
-[AVHWDeviceContext @ 0x55dee05a2040] More than one matching device found.
-Device creation failed: -19.
-Failed to set value 'opencl' for option 'init_hw_device': No such device
-Error parsing global options: No such device
-```
-
-Now, you'll notice a platform init error for OpenCL, and that is because we did not pick up a specific device. 
-When done properly, for both devices, this is the output you should get:
-
-i. First OpenCL device:
-
-```
-ffmpeg -hide_banner -v verbose -init_hw_device opencl:1.0
-
-[AVHWDeviceContext @ 0x562f64b66040] 1.0: Intel(R) OpenCL HD Graphics / Intel(R) Gen9 HD Graphics NEO
-Hyper fast Audio and Video encoder
-
-```
-ii. Second OpenCL device:
-
-```
-ffmpeg -hide_banner -v verbose -init_hw_device opencl:0.1
-
-ffmpeg -hide_banner -v verbose -init_hw_device opencl:0.0
-[AVHWDeviceContext @ 0x55e7524fb040] 0.0: NVIDIA CUDA / GeForce GTX 1070 with Max-Q Design
-
-```
-
-Take note of the syntax used.
-On a platform with more than one OpenCL platform, the device ordinal must be selected from the OpenCL platform its' on, followed by the device index number. 
-
-Using the example above, you can see that this device has two OpenCL platforms, the Intel Neo stack and the NVIDIA CUDA stack.
-These platforms are `opencl:1` and `opencl:0` respectively.
-The devices are `opencl:1:1` and `opencl:0:0` respectively, where the first device ordinal is always zero (0).
-
-
-**Bonus score:** If you're adventurous, you could also try out this OpenCL build of libvpx from Ittiam systems, especially if you're using Integrated graphics or an FPGA (Xilinx): https://github.com/ittiamvpx/libvpx
-
-**Carrying on:**
-
 **(c ). Build and configure libx265:** This library provides a H.265/HEVC video encoder. See the [H.265 Encoding Guide](https://trac.ffmpeg.org/wiki/Encode/H.265) for more information and usage examples.
 
 ```
@@ -496,6 +436,7 @@ PATH="$HOME/bin:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$HOME/f
 make -j$(nproc) VERBOSE=1
 make -j$(nproc) install VERBOSE=1
 make -j$(nproc) clean VERBOSE=1
+
 ```
 
 **(d). Build and deploy the libfdk-aac library:** This provides an AAC audio encoder. See the [AAC Audio Encoding Guide](https://trac.ffmpeg.org/wiki/Encode/AAC) for more information and usage examples. This requires ffmpeg to be configured with `--enable-libfdk-aac` (and `--enable-nonfree` if you also included `--enable-gpl`).
@@ -510,37 +451,38 @@ autoreconf -fiv
 make -j$(nproc)
 make -j$(nproc) install
 make -j$(nproc) distclean
+
 ```
 
 **(e). Build and configure libvpx:**
 
 ```
-   cd ~/ffmpeg_sources
-   git clone https://github.com/webmproject/libvpx
-   cd libvpx
-   ./configure --prefix="$HOME/ffmpeg_build" --enable-runtime-cpu-detect --enable-vp9 --enable-vp8 \
-   --enable-postproc --enable-vp9-postproc --enable-multi-res-encoding --enable-webm-io --enable-better-hw-compatibility --enable-vp9-highbitdepth --enable-onthefly-bitpacking --enable-realtime-only --cpu=native --as=nasm 
-   time make -j$(nproc)
-   time make -j$(nproc) install
-   time make clean -j$(nproc)
-   time make distclean
+cd ~/ffmpeg_sources
+git clone https://github.com/webmproject/libvpx
+cd libvpx
+./configure --prefix="$HOME/ffmpeg_build" --enable-runtime-cpu-detect --enable-vp9 --enable-vp8 \
+--enable-postproc --enable-vp9-postproc --enable-multi-res-encoding --enable-webm-io --enable-better-hw-compatibility --enable-vp9-highbitdepth --enable-onthefly-bitpacking --enable-realtime-only --cpu=native --as=nasm 
+time make -j$(nproc)
+time make -j$(nproc) install
+time make clean -j$(nproc)
+time make distclean
 ```
 
 **(f). Build LibVorbis:**
 
 ```
-   cd ~/ffmpeg_sources
-   wget -c -v http://downloads.xiph.org/releases/vorbis/libvorbis-1.3.6.tar.xz
-   tar -xvf libvorbis-1.3.6.tar.xz
-   cd libvorbis-1.3.6
-   ./configure --enable-static --prefix="$HOME/ffmpeg_build"
-   time make -j$(nproc)
-   time make -j$(nproc) install
-   time make clean -j$(nproc)
-   time make distclean
+cd ~/ffmpeg_sources
+wget -c -v http://downloads.xiph.org/releases/vorbis/libvorbis-1.3.6.tar.xz
+tar -xvf libvorbis-1.3.6.tar.xz
+cd libvorbis-1.3.6
+./configure --enable-static --prefix="$HOME/ffmpeg_build"
+time make -j$(nproc)
+time make -j$(nproc) install
+time make clean -j$(nproc)
+time make distclean
 ```
 
-**(g). Build FFmpeg (with OpeenCL enabled. If not needed, omit `--enable-opencl` option):**
+**(g). Build FFmpeg (with OpenCL enabled):**
 
 Notes on API support:
 
@@ -587,11 +529,9 @@ PATH="$HOME/bin:$PATH" make -j$(nproc)
 make -j$(nproc) install 
 make -j$(nproc) distclean 
 hash -r
-
-
 ```
 
-Note: To get debug builds, add the `--enable-debug=3` configuration flag and omit the `distclean` step and you'll find the `ffmpeg_g` binary under the sources subdirectory.
+**Note:** To get debug builds, add the `--enable-debug=3` configuration flag and omit the `distclean` step and you'll find the `ffmpeg_g` binary under the sources subdirectory.
 
 We only want the debug builds when an issue crops up and a gdb trace may be required for debugging purposes. Otherwise, leave this omitted for production environments.
 
@@ -611,7 +551,9 @@ ffmpeg  -hide_banner -encoders | grep vaapi
  V..... vp8_vaapi            VP8 (VAAPI) (codec vp8)
  V..... vp9_vaapi            VP9 (VAAPI) (codec vp9)
 
+
 ```
+
 (b). QSV:
 
 ```
@@ -619,16 +561,12 @@ ffmpeg  -hide_banner -encoders | grep vaapi
  V..... hevc_qsv             HEVC (Intel Quick Sync Video acceleration) (codec hevc)
  V..... mjpeg_qsv            MJPEG (Intel Quick Sync Video acceleration) (codec mjpeg)
  V..... mpeg2_qsv            MPEG-2 video (Intel Quick Sync Video acceleration) (codec mpeg2video)
-
 ```
-
-
 
 See the help documentation for each encoder in question:
 
 ```
 ffmpeg -hide_banner -h encoder='encoder name'
-
 ```
 
 **Test the encoders;**
@@ -639,7 +577,6 @@ Using GNU parallel, we will encode some mp4 files (4k H.264 test samples, 40 min
 
 ```
 parallel -j 10 --verbose 'ffmpeg -loglevel debug -threads 4 -hwaccel vaapi -i "{}"  -vaapi_device /dev/dri/renderD129 -c:v vp8_vaapi -loop_filter_level:v 63 -loop_filter_sharpness:v 15 -b:v 4500k -maxrate:v 7500k -vf 'format=nv12,hwupload,scale_vaapi=w=1920:h=1080' -c:a libvorbis -b:a 384k -ac 6 -f webm "{.}.webm"' ::: $(find . -type f -name '*.mp4')
-
 ```
 
 **To HEVC with GNU Parallel:**
@@ -648,57 +585,54 @@ To HEVC Main Profile, launching 10 encode jobs simultaneously:
 
 ```
 parallel -j 4 --verbose 'ffmpeg -loglevel debug -threads 4 -hwaccel vaapi -i "{}"  -vaapi_device /dev/dri/renderD129 -c:v hevc_vaapi -qp:v 19 -b:v 2100k -maxrate:v 3500k -vf 'format=nv12,hwupload,scale_vaapi=w=1920:h=1080' -c:a libvorbis -b:a 384k -ac 6 -f matroska "{.}.mkv"' ::: $(find . -type f -name '*.mp4')
-
 ```
 
 **FFmpeg QSV encoder usage notes:**
 
-I provide an example below that demonstrates the use of a complex filter chain with the QSV encoders in place for livestreaming purposes.
-Adapt as per your needs.
+I provide an example below that demonstrates the use of a complex filter chain with the QSV encoders in place for livestreaming purposes. Adapt as per your needs.
 
 **Complex Filter chain usage for variant stream encoding with Intel's QSV encoders:**
 
 Take the example snippet below, which takes the safest (and not necessarily the fastest route), utilizing a hybrid encoder approach (partial hwaccel with significant processor load):
 
 ```
-    ffmpeg -re -stream_loop -1 -threads n -loglevel debug -filter_complex_threads n \
-    -init_hw_device qsv=qsv:MFX_IMPL_hw_any -hwaccel qsv -filter_hw_device qsv \
-    -i 'udp://$stream_url:$port?fifo_size=9000000' \
-    -filter_complex "[0:v]split=6[s0][s1][s2][s3][s4][s5]; \
-    [s0]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=1920:1080:format=nv12[v0]; \
-    [s1]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=1280:720:format=nv12[v1];
-    [s2]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=960:540:format=nv12[v2];
-    [s3]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=842:480:format=nv12[v3];
-    [s4]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=480:360:format=nv12[v4];
-    [s5]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=426:240:format=nv12[v5]" \
-    -b:v:0 2250k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
-    -b:v:1 1750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
-    -b:v:2 1000k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
-    -b:v:3 875k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
-    -b:v:4 750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
-    -b:v:5 640k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
-    -c:a aac -b:a 128k -ar 48000 -ac 2 \
-    -flags -global_header -f tee -use_fifo 1 \
-    -map "[v0]" -map "[v1]" -map "[v2]" -map "[v3]" -map "[v4]" -map "[v5]" -map 0:a:0 -map 0:a:1 \
-    "[select=\'v:0,a\':f=mpegts]udp:$stream_url_out:$port_out| \
-    [select=\'v:0,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:0,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out"
-
+ffmpeg -re -stream_loop -1 -threads n -loglevel debug -filter_complex_threads n \
+-init_hw_device qsv=qsv:MFX_IMPL_hw_any -hwaccel qsv -filter_hw_device qsv \
+-i 'udp://$stream_url:$port?fifo_size=9000000' \
+-filter_complex "[0:v]split=6[s0][s1][s2][s3][s4][s5]; \
+[s0]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=1920:1080:format=nv12[v0]; \
+[s1]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=1280:720:format=nv12[v1];
+[s2]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=960:540:format=nv12[v2];
+[s3]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=842:480:format=nv12[v3];
+[s4]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=480:360:format=nv12[v4];
+[s5]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=426:240:format=nv12[v5]" \
+-b:v:0 2250k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+-b:v:1 1750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+-b:v:2 1000k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+-b:v:3 875k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+-b:v:4 750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+-b:v:5 640k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+-c:a aac -b:a 128k -ar 48000 -ac 2 \
+-flags -global_header -f tee -use_fifo 1 \
+-map "[v0]" -map "[v1]" -map "[v2]" -map "[v3]" -map "[v4]" -map "[v5]" -map 0:a:0 -map 0:a:1 \
+"[select=\'v:0,a\':f=mpegts]udp:$stream_url_out:$port_out| \
+ [select=\'v:0,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:0,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out"
 ```
 
 **Template breakdown:**
@@ -746,14 +680,12 @@ Error while processing the decoded data for stream #0:0
 [AVIOContext @ 0x3a68f80] Statistics: 0 seeks, 0 writeouts
 [AVIOContext @ 0x3a6cd40] Statistics: 1022463 bytes read, 0 seeks
 Conversion failed!
-
 ```
 
 (b). When initializing the encoder, the hardware device node for [libmfx](https://trac.ffmpeg.org/wiki/Hardware/QuickSync) _must_ be initialized as shown:
 
 ```
 -init_hw_device qsv=qsv:MFX_IMPL_hw_any -hwaccel qsv -filter_hw_device qsv
-
 ```
 
 That ensures that the proper hardware accelerator node (`qsv`) is initialized with the proper device context (`-init_hw_device qsv=qsv:MFX_IMPL_hw_any`) with device nodes for a hardware accelerator implementation being inherited `(-hwaccel qsv`) with an appropriate filter device (`-filter_hw_device qsv`) are initialized for resource allocation by the `hwupload` filter, the `vpp_qsv` post-processor (needed for advanced deinterlacing) and the `scale_vpp` filter (needed for texture format conversion to nv12, otherwise the encoder will fail).
@@ -762,14 +694,12 @@ If hardware scaling is undesired, the filter chain can be modified from:
 
 ```
 [sn]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=W:H:format=nv12[vn]
-
 ```
 
 To:
 
 ```
 [sn]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=format=nv12[vn]
-
 ```
 
 Where `n` is the stream specifier id inherited from the complex filter chain. Note that the texture conversion is mandatory, and cannot be skipped.
@@ -781,44 +711,43 @@ The other arguments passed to the encoder are optimal for smooth streaming, enab
 If you're after a **full hardware-accelerated transcode pipeline** (use with caution as it may not work with all input formats), see the snippet below:
 
 ```
-    ffmpeg -re -stream_loop -1 -threads n -loglevel debug -filter_complex_threads n \
-    -c:v h264_qsv -hwaccel qsv \
-    -i 'udp://$stream_url:$port?fifo_size=9000000' \
-    -filter_complex "[0:v]split=6[s0][s1][s2][s3][s4][s5]; \
-    [s0]vpp_qsv=deinterlace=2,scale_qsv=1920:1080:format=nv12[v0]; \
-    [s1]vpp_qsv=deinterlace=2,scale_qsv=1280:720:format=nv12[v1];
-    [s2]vpp_qsv=deinterlace=2,scale_qsv=960:540:format=nv12[v2];
-    [s3]vpp_qsv=deinterlace=2,scale_qsv=842:480:format=nv12[v3];
-    [s4]vpp_qsv=deinterlace=2,scale_qsv=480:360:format=nv12[v4];
-    [s5]vpp_qsv=deinterlace=2,scale_qsv=426:240:format=nv12[v5]" \
-    -b:v:0 2250k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
-    -b:v:1 1750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
-    -b:v:2 1000k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
-    -b:v:3 875k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
-    -b:v:4 750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
-    -b:v:5 640k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
-    -c:a aac -b:a 128k -ar 48000 -ac 2 \
-    -flags -global_header -f tee -use_fifo 1 \
-    -map "[v0]" -map "[v1]" -map "[v2]" -map "[v3]" -map "[v4]" -map "[v5]" -map 0:a:0 -map 0:a:1 \
-    "[select=\'v:0,a\':f=mpegts]udp:$stream_url_out:$port_out| \
-    [select=\'v:0,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:0,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out| \
-    [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out"
-
+ffmpeg -re -stream_loop -1 -threads n -loglevel debug -filter_complex_threads n \
+-c:v h264_qsv -hwaccel qsv \
+-i 'udp://$stream_url:$port?fifo_size=9000000' \
+-filter_complex "[0:v]split=6[s0][s1][s2][s3][s4][s5]; \
+[s0]vpp_qsv=deinterlace=2,scale_qsv=1920:1080:format=nv12[v0]; \
+[s1]vpp_qsv=deinterlace=2,scale_qsv=1280:720:format=nv12[v1];
+[s2]vpp_qsv=deinterlace=2,scale_qsv=960:540:format=nv12[v2];
+[s3]vpp_qsv=deinterlace=2,scale_qsv=842:480:format=nv12[v3];
+[s4]vpp_qsv=deinterlace=2,scale_qsv=480:360:format=nv12[v4];
+[s5]vpp_qsv=deinterlace=2,scale_qsv=426:240:format=nv12[v5]" \
+-b:v:0 2250k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+-b:v:1 1750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+-b:v:2 1000k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+-b:v:3 875k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+-b:v:4 750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+-b:v:5 640k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
+-c:a aac -b:a 128k -ar 48000 -ac 2 \
+-flags -global_header -f tee -use_fifo 1 \
+-map "[v0]" -map "[v1]" -map "[v2]" -map "[v3]" -map "[v4]" -map "[v5]" -map 0:a:0 -map 0:a:1 \
+"[select=\'v:0,a\':f=mpegts]udp:$stream_url_out:$port_out| \
+ [select=\'v:0,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:0,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:1,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:2,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:3,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:4,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out| \
+ [select=\'v:5,a\':f=mpegts]udp://$stream_url_out:$port_out"
 ```
 
 So, what has changed here? For one:
@@ -827,12 +756,12 @@ So, what has changed here? For one:
 
 (b). We have dropped the manual H/W init (`-init_hw_device qsv=qsv:MFX_IMPL_hw_any -hwaccel qsv -filter_hw_device qsv`) and the hwupload video filter.
 
-4. The open source iMSDK has a frame encoder limit of 1000 for the HEVC-based encoder, and as such, the HEVC encoder components should only be used for evaluation purposes. These that require these functions should consult the [proprietary licensed SDK](https://software.intel.com/en-us/media-sdk). To specify the frame limit in ffmpeg, use the `-vframes n` option, where `n` is an integer.
+4.  The open source iMSDK has a frame encoder limit of 1000 for the HEVC-based encoder, and as such, the HEVC encoder components should only be used for evaluation purposes. These that require these functions should consult the [proprietary licensed SDK](https://software.intel.com/en-us/media-sdk). To specify the frame limit in ffmpeg, use the `-vframes n` option, where `n` is an integer.
+    
+5.  The `iHD` libva driver also provides similar VAAPI functionality as the opensource `i965` driver, with a few discrepancies:
+    
 
-5. The `iHD` libva driver also provides similar VAAPI functionality as the opensource `i965` driver, with a few discrepancies:
-
-(a). It does not offer encode entry points for VP8 and VP9 codecs (yet).
-(b). As mentioned above, HEVC encoding is for evaluation purposes only and will limit the encode to a mere 1000 frames.
+(a). It does not offer encode entry points for VP8 and VP9 codecs (yet). (b). As mentioned above, HEVC encoding is for evaluation purposes only and will limit the encode to a mere 1000 frames.
 
 See the VAAPI features enabled with this iHD driver:
 
@@ -878,9 +807,159 @@ vainfo: Supported profile and entrypoints
       VAProfileHEVCMain10             :	VAEntrypointEncSlice
       VAProfileVP9Profile0            :	VAEntrypointVLD
       VAProfileVP9Profile2            :	VAEntrypointVLD
+```
+
+**Note:** OpenCL enablement in both libx264 and FFmpeg are dependent on the following conditions:
+
+(a). The flag `--disable-opencl` is removed from libx264's configuration.
+
+(b). The flag `--enable-opencl` is present in FFmpeg's configure options.
+
+(c ). The prerequisite packages for OpenCL development are present:
+
+With OpenCL, the installable client drivers (ICDs) are normally issued with the accelerator's device drivers, namely:
+
+```
+1.The NVIDIA CUDA toolkit (and the device driver) for NVIDIA GPUs.
+2. AMD's RoCM for GCN-class AMD hardware.
+3. Intel's beignet and the newer Neo compute runtime, as on OUR platform.
+```
+
+The purpose of the installable client driver model is to allow multiple OpenCL platforms to coexist on the same platform. That way, multiple OpenCL accelerators, be they discrete GPUs paired with a combination of FPGAs and integrated GPUs can all coexist.
+
+However, for linkage purposes, you'll require the ocl-icd package (which we installed earlier), which can be installed by:
+
+```
+sudo apt install ocl-icd-* 
+```
+
+Why ocl-icd? Simple: Whereas other ICDs may permit you to link against them directly, it is discouraged so as to limit the risk of unexpected runtime behavior. Assume ocl-icd to be the gold link target if your goal is to be platform-neutral as possible.
+
+**OpenCL in FFmpeg:**
+
+OpenCL's enablement in FFmpeg comes in two ways:
+
+(a):. Some encoders, such as `libx264`, if built with OpenCL enablement, can utilize these capabilities for accelerated lookahead functions. The performance impact for this enablement will vary with the GPU on the platform, and with older GPUs, may slow down the encoder. Lower power platforms such as specific AMD APUs and their SoCs may see modest performance improvements at best, but on modern, high performance GPUs, your mileage may vary. Expect no miracles. The reason OpenCL lookahead is available for this library in particular is that the lookahead algorithms for OpenCL are easily parallelized.
+
+For instance, you can combine the `-hwaccel auto` option which allows you to select the hardware-based accelerated decoding to use for the encode session with `libx264`. You can add this parameter with "auto" before input (if your x264 is compiled with OpenCL support you can try to add `-x264opts` param), for example:
+
+```
+ffmpeg -hwaccel auto -i input -vcodec libx264 -x264opts opencl output
+```
+
+(b):. FFmpeg, in particular, can utilize OpenCL with some filters, namely `program_opencl` and `opencl_src` as documented in the filters documentation, among others.
+
+See the sample command below:
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device 
+opencl=ocl:1.0 -filter_hw_device ocl -i 
+"cheeks.mkv" -an -map_metadata -1 -sws_flags 
+lanczos+accurate_rnd+full_chroma_int+full_chroma_inp -filter_complex 
+"[0:v]yadif=0:0:0,hwupload,unsharp_opencl=lx=3:ly=3:la=0.5:cx=3:cy=3:ca=0.5,hwdownload,setdar=dar=16/9" 
+ -r 25 -c:v h264_nvenc -preset:v llhq -bf 2 -g 50 -refs 3 -rc:v 
+vbr_hq -rc-lookahead:v 32 -coder:v cabac -movflags 
++faststart -profile:v high -level 4.1 -pixel_format yuv420p -y 
+"crunchy_cheeks.mp4"
+```
+
+**List OpenCL platform devices:***
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device list
+ffmpeg -hide_banner -v verbose -init_hw_device opencl
+ffmpeg -hide_banner -v verbose -init_hw_device opencl:1.0 
+```
+
+For the filter, see:
+
+```
+ffmpeg -hide_banner -v verbose -h filter=unsharp_opencl 
+```
+
+**Example:**
+
+On the test-bed:
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device list
+Supported hardware device types:
+vaapi
+qsv
+drm
+opencl
+```
+
+And based on these platforms:
+
+(a). QSV:
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device qsv
+[AVHWDeviceContext @ 0x559f67501440] Opened VA display via X11 display :1.
+[AVHWDeviceContext @ 0x559f67501440] libva: VA-API version 1.2.0
+[AVHWDeviceContext @ 0x559f67501440] libva: va_getDriverName() returns 0
+[AVHWDeviceContext @ 0x559f67501440] libva: User requested driver 'iHD'
+[AVHWDeviceContext @ 0x559f67501440] libva: Trying to open /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
+[AVHWDeviceContext @ 0x559f67501440] libva: Found init function __vaDriverInit_1_2
+[AVHWDeviceContext @ 0x559f67501440] libva: va_openDriver() returns 0
+[AVHWDeviceContext @ 0x559f67501440] Initialised VAAPI connection: version 1.2
+[AVHWDeviceContext @ 0x559f67501440] Unknown driver "Intel iHD driver - 2.0.0", assuming standard behaviour.
+[AVHWDeviceContext @ 0x559f67501040] Initialize MFX session: API version is 1.27, implementation version is 1.27
+[AVHWDeviceContext @ 0x559f67501040] MFX compile/runtime API: 1.27/1.27
+Hyper fast Audio and Video encoder
 
 ```
 
-Testing continues. 
+(b). VAAPI:
 
+```
+ffmpeg -hide_banner -v verbose -init_hw_device vaapi
+[AVHWDeviceContext @ 0x56362b64d040] Opened VA display via X11 display :1.
+[AVHWDeviceContext @ 0x56362b64d040] libva: VA-API version 1.2.0
+[AVHWDeviceContext @ 0x56362b64d040] libva: va_getDriverName() returns 0
+[AVHWDeviceContext @ 0x56362b64d040] libva: User requested driver 'iHD'
+[AVHWDeviceContext @ 0x56362b64d040] libva: Trying to open /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so
+[AVHWDeviceContext @ 0x56362b64d040] libva: Found init function __vaDriverInit_1_2
+[AVHWDeviceContext @ 0x56362b64d040] libva: va_openDriver() returns 0
+[AVHWDeviceContext @ 0x56362b64d040] Initialised VAAPI connection: version 1.2
+[AVHWDeviceContext @ 0x56362b64d040] Unknown driver "Intel iHD driver - 2.0.0", assuming standard behaviour.
 
+```
+
+(c). OpenCL:
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device opencl
+
+[AVHWDeviceContext @ 0x55dee05a2040] 0.0: NVIDIA CUDA / GeForce GTX 1070 with Max-Q Design
+[AVHWDeviceContext @ 0x55dee05a2040] 1.0: Intel(R) OpenCL HD Graphics / Intel(R) Gen9 HD Graphics NEO
+[AVHWDeviceContext @ 0x55dee05a2040] More than one matching device found.
+Device creation failed: -19.
+Failed to set value 'opencl' for option 'init_hw_device': No such device
+Error parsing global options: No such device
+```
+
+Now, you'll notice a platform init error for OpenCL, and that is because we did not pick up a specific device. When done properly, for both devices, this is the output you should get:
+
+i. First OpenCL device:
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device opencl:1.0
+
+[AVHWDeviceContext @ 0x562f64b66040] 1.0: Intel(R) OpenCL HD Graphics / Intel(R) Gen9 HD Graphics NEO
+Hyper fast Audio and Video encoder
+```
+
+ii. Second OpenCL device:
+
+```
+ffmpeg -hide_banner -v verbose -init_hw_device opencl:0.1
+
+ffmpeg -hide_banner -v verbose -init_hw_device opencl:0.0
+[AVHWDeviceContext @ 0x55e7524fb040] 0.0: NVIDIA CUDA / GeForce GTX 1070 with Max-Q Design
+```
+
+Take note of the syntax used. On a platform with more than one OpenCL platform, the device ordinal must be selected from the OpenCL platform its' on, followed by the device index number.
+
+Using the example above, you can see that this device has two OpenCL platforms, the Intel Neo stack and the NVIDIA CUDA stack. These platforms are `opencl:1` and `opencl:0` respectively. The devices are `opencl:1:1` and `opencl:0:0` respectively, where the first device ordinal is always zero (0).
