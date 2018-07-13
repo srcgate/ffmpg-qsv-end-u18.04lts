@@ -230,7 +230,8 @@ If you encounter errors above (with Intel's Perl configurator), use the CMake ro
 
 ```
 mkdir -p ~/vaapi/build_msdk
-cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_WAYLAND=ON -DENABLE_X11-DRI3=ON  ../msdk
+cd ~/vaapi/build_msdk
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_WAYLAND=ON -DENABLE_X11_DRI3=ON  ../msdk
 time make -j$(nproc) VERBOSE=1
 sudo make install -j$(nroc) VERBOSE=1
 ```
