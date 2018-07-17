@@ -235,6 +235,64 @@ LIBVA_DRIVER_NAME=iHD
 
 Put that in `/etc/environment`.
 
+**Fallback for the Intel Opensource VAAPI driver:**
+
+ 1. [cmrt](https://github.com/01org/cmrt):
+
+This is the C for Media Runtime GPU Kernel Manager for Intel G45 & HD Graphics family. 
+it's a prerequisite for building the [intel-hybrid-driver](https://github.com/01org/intel-hybrid-driver) package on supported platforms.
+
+    git clone https://github.com/01org/cmrt
+    cd cmrt
+    ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
+    time make -j$(nproc) VERBOSE=1
+    sudo make -j$(nproc) install
+    
+
+2. [intel-hybrid-driver](https://github.com/01org/intel-hybrid-driver):
+
+This package provides support for WebM project VPx codecs. GPU acceleration
+is provided via media kernels executed on Intel GEN GPUs.  The hybrid driver provides the CPU
+bound entropy (e.g., CPBAC) decoding and manages the GEN GPU media kernel parameters and buffers.
+
+This package grants access to the VPX-series hybrid decode capabilities on supported hardware configurations,, namely Haswell and Skylake. **Do not build this target on unsupported platforms.**
+
+Related, see [this commit](https://github.com/intel/intel-vaapi-driver/commit/fbbd181c2d60affb3135bd3ad7e87524253d7e9a) regarding the hybrid driver initialization failure on platforms where its' not relevant.
+
+    git clone https://github.com/01org/intel-hybrid-driver
+    cd intel-hybrid-driver
+    ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
+    time make -j$(nproc) VERBOSE=1
+    sudo make -j$(nproc) install
+    
+
+3. [intel-vaapi-driver](https://github.com/01org/intel-vaapi-driver):
+
+This package provides the VA-API (Video Acceleration API) user mode driver for Intel GEN Graphics family SKUs.
+The current video driver back-end provides a bridge to the GEN GPUs through the packaging of buffers and commands to be sent to the i915 driver for exercising both hardware and shader functionality for video decode, encode, and processing.
+
+it also provides a wrapper to the [intel-hybrid-driver](https://github.com/01org/intel-hybrid-driver) when called up to handle VP8/9 hybrid decode tasks on supported hardware (when configured with the `--enable-hybrid-codec` option as shown below:).
+
+    git clone https://github.com/01org/intel-vaapi-driver
+    cd intel-vaapi-driver
+    ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --enable-hybrid-codec
+    time make -j$(nproc) VERBOSE=1
+    sudo make -j$(nproc) install
+    
+However, on **Kabylake and newer**, omit this as shown since its' not needed:
+
+```
+cd ~/vaapi
+git clone https://github.com/intel/intel-vaapi-driver
+cd intel-vaapi-driver
+./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu 
+time make -j$(nproc) VERBOSE=1
+sudo make -j$(nproc) install
+
+```
+
+Proceed:
+
 **4. [libva-utils:](https://github.com/intel/libva-utils)**
 
 This package provides a collection of tests for VA-API, such as `vainfo`, needed to validate a platform's supported features (encode, decode & postproc attributes on a per-codec basis by VAAPI entry points information).
