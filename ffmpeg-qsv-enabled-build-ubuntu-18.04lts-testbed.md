@@ -105,7 +105,7 @@ mkdir -p ~/intel-compute-runtime/workspace/build_icr
 
 cd ~/intel-compute-runtime/workspace/build_icr
 
-cmake -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release ../neo
+cmake -DCMAKE_BUILD_TYPE=Release ../neo
 
 time make -j$(nproc) package VERBOSE=1
 ```
