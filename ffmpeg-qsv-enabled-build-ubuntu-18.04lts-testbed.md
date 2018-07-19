@@ -24,7 +24,7 @@ It is recommended that you build the Intel Neo OpenCL runtime:
 **Build dependencies:**
 
 ```
-sudo apt-get install ccache flex bison clang-4.0 cmake g++ git patch zlib1g-dev autoconf xutils-dev libtool pkg-config libpciaccess-dev
+sudo apt-get install ccache flex bison clang-4.0 cmake g++ git patch zlib1g-dev autoconf xutils-dev libtool pkg-config libpciaccess-dev libz-dev
 ```
 
 Create the project structure:
