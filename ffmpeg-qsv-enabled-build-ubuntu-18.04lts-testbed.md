@@ -235,6 +235,17 @@ LIBVA_DRIVER_NAME=iHD
 
 Put that in `/etc/environment`.
 
+**And for the opensource driver (fallback):**
+
+Export environment variables as shown below:
+
+```
+LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+LIBVA_DRIVER_NAME=i965
+```
+
+Put that in `/etc/environment`.
+
 **Fallback for the Intel Opensource VAAPI driver:**
 
  1. [cmrt](https://github.com/01org/cmrt):
