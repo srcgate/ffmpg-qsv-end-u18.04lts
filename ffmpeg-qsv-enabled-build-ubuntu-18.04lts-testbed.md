@@ -415,7 +415,7 @@ sudo make install -j$(nroc) VERBOSE=1
 
 CMake will automatically detect the platform you're on and enable the platform-specific hooks needed for a working build.
 
-Apply this workaround:
+**Obsolete:** Apply this workaround (no longer needed as its' the default upstream):
 
 ```
 sudo mkdir -p /opt/intel/mediasdk/include/mfx
