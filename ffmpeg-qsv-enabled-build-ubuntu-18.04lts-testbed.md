@@ -100,7 +100,7 @@ sudo dpkg -i *.deb
 
 **Add LLVM-4.x to system path:**
 
-Append `/usr/lib/llvm-4.0/bin` at the end of the PATH variable in `/etc/environment` and source the file:
+Append `:/usr/lib/llvm-4.0/bin:$HOME/bin` at the end of the PATH variable in `/etc/environment` and source the file:
 
 ```
 source /etc/environment
