@@ -13,6 +13,16 @@ sudo add-apt-repository ppa:oibaf/graphics-drivers
 sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get -y dist-upgrade
 ```
 
+**To address linker problems down the line with Ubuntu 18.04LTS:**
+
+Referring to this: https://forum.openframeworks.cc/t/ubuntu-unable-to-compile-missing-glx-mesa/29367/2
+
+Create the following symlink as shown:
+
+```
+sudo ln -s /usr/lib/x86_64-linux-gnu/libGLX_mesa.so.0 /usr/lib/x86_64-linux-gnu/libGLX_mesa.so
+```
+
 **Before you begin:**
 
 It is recommended that you build the Intel Neo OpenCL runtime:
