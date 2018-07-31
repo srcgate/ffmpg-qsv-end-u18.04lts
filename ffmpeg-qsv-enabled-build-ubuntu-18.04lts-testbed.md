@@ -263,6 +263,7 @@ Put that in `/etc/environment`.
 This is the C for Media Runtime GPU Kernel Manager for Intel G45 & HD Graphics family. 
 it's a prerequisite for building the [intel-hybrid-driver](https://github.com/01org/intel-hybrid-driver) package on supported platforms.
 
+    cd ~/vaapi
     git clone https://github.com/01org/cmrt
     cd cmrt
     ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
@@ -280,6 +281,7 @@ This package grants access to the VPX-series hybrid decode capabilities on suppo
 
 Related, see [this commit](https://github.com/intel/intel-vaapi-driver/commit/fbbd181c2d60affb3135bd3ad7e87524253d7e9a) regarding the hybrid driver initialization failure on platforms where its' not relevant.
 
+    cd ~/vaapi
     git clone https://github.com/01org/intel-hybrid-driver
     cd intel-hybrid-driver
     ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
@@ -294,6 +296,7 @@ The current video driver back-end provides a bridge to the GEN GPUs through the 
 
 it also provides a wrapper to the [intel-hybrid-driver](https://github.com/01org/intel-hybrid-driver) when called up to handle VP8/9 hybrid decode tasks on supported hardware (when configured with the `--enable-hybrid-codec` option as shown below:).
 
+    cd ~/vaapi
     git clone https://github.com/01org/intel-vaapi-driver
     cd intel-vaapi-driver
     ./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --enable-hybrid-codec
