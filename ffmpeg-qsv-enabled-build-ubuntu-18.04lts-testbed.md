@@ -245,7 +245,7 @@ LIBVA_DRIVER_NAME=iHD
 
 Put that in `/etc/environment`.
 
-**And for the opensource driver (fallback):**
+**And for the opensource driver (fallback, see notice below):**
 
 Export environment variables as shown below:
 
@@ -255,6 +255,9 @@ LIBVA_DRIVER_NAME=i965
 ```
 
 Put that in `/etc/environment`.
+
+
+**Notice:** You should ONLY use the `i965` driver for testing and validation only. For QSV-based deployments in production, ensure that `iHD` is the value set for the `LIBVA_DRIVER_NAME` variable, otherwise FFmpeg's QSV-based encoders will fail to initialize. Note that VAAPI is also supported by the `iHD` driver albeit to a limited feature-set, as explained in the last section.
 
 **Fallback for the Intel Opensource VAAPI driver:**
 
