@@ -1048,3 +1048,15 @@ ffmpeg -hide_banner -v verbose -init_hw_device opencl:0.0
 Take note of the syntax used. On a platform with more than one OpenCL platform, the device ordinal must be selected from the OpenCL platform its' on, followed by the device index number.
 
 Using the example above, you can see that this device has two OpenCL platforms, the Intel Neo stack and the NVIDIA CUDA stack. These platforms are `opencl:1` and `opencl:0` respectively. The devices are `opencl:1:1` and `opencl:0:0` respectively, where the first device ordinal is always zero (0).
+
+**An OpenCL-based tonemap filter example:**
+
+You can use an OpenCL-based tone map filters, allowing for HDR(HDR10/HLG) to SDR conversion with tone-mapping, with the example shown below:
+
+```
+ffmpeg -init_hw_device vaapi=va:/dev/dri/renderD128 -init_hw_device \
+opencl=ocl@va -hwaccel vaapi -hwaccel_device va -hwaccel_output_format \
+vaapi -i INPUT -filter_hw_device ocl -filter_complex \
+'[0:v]hwmap,tonemap_opencl=t=bt2020:tonemap=linear:format=p010[x1]; \
+[x1]hwmap=derive_device=vaapi:reverse=1' -c:v hevc_vaapi -profile 2 OUTPUT
+```
