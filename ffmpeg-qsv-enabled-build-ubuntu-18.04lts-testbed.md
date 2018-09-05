@@ -476,7 +476,7 @@ mkdir -p ~/vaapi/build_msdk
 cd ~/vaapi/build_msdk
 cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_WAYLAND=ON -DENABLE_X11_DRI3=ON  ../msdk
 time make -j$(nproc) VERBOSE=1
-sudo make install -j$(nroc) VERBOSE=1
+sudo make install -j$(nproc) VERBOSE=1
 ```
 
 CMake will automatically detect the platform you're on and enable the platform-specific hooks needed for a working build.
