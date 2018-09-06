@@ -29,6 +29,19 @@ It is recommended that you build the Intel Neo OpenCL runtime:
 
 **Justification:** This will allow for Intel's MediaSDK OpenCL inter-op back-end to be built. 
 
+**Note:** There's also a Personal Package Archive (PPA) for this that you can add, allowing you to skip the manual build step, as shown:
+
+```
+sudo add-apt-repository ppa:intel-opencl/intel-opencl
+sudo apt-get update
+```
+
+Then install the packages:
+
+    sudo apt install intel-igc intel-opencl-clang intel-opencl
+
+Note that the PPA builds are a bit behind the upstream stack, and as such, these needing the latest version should use the build steps below.
+
 **Install the dependencies for the OpenCL back-end:**
 
 **Build dependencies:**
