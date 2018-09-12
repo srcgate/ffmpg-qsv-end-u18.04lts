@@ -38,7 +38,7 @@ sudo apt-get update
 
 Then install the packages:
 
-    sudo apt install intel-igc intel-opencl-clang intel-opencl
+    sudo apt install intel-igc-* intel-opencl-* intel-cloc intel-cmt-cat
 
 Note that the PPA builds are a bit behind the upstream stack, and as such, these needing the latest version should use the build steps below.
 
