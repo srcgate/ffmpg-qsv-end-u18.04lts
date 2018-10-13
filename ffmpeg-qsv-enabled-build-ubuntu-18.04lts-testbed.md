@@ -23,136 +23,6 @@ Create the following symlink as shown:
 sudo ln -s /usr/lib/x86_64-linux-gnu/libGLX_mesa.so.0 /usr/lib/x86_64-linux-gnu/libGLX_mesa.so
 ```
 
-**Before you begin:**
-
-It is recommended that you build the Intel Neo OpenCL runtime:
-
-**Justification:** This will allow for Intel's MediaSDK OpenCL inter-op back-end to be built. 
-
-**Note:** There's also a Personal Package Archive (PPA) for this that you can add, allowing you to skip the manual build step, as shown:
-
-```
-sudo add-apt-repository ppa:intel-opencl/intel-opencl
-sudo apt-get update
-```
-
-Then install the packages:
-
-    sudo apt install intel-igc-* intel-opencl* intel-cloc intel-cmt-cat
-
-Note that the PPA builds are a bit behind the upstream stack, and as such, these needing the latest version should use the build steps below.
-
-**Install the dependencies for the OpenCL back-end:**
-
-**Build dependencies:**
-
-```
-sudo apt-get install ccache flex bison clang-4.0 cmake g++ git patch zlib1g-dev autoconf xutils-dev libtool pkg-config libpciaccess-dev libz-dev
-```
-
-Create the project structure:
-```
-mkdir -p ~/intel-compute-runtime/workspace
-```
-
-Within this workspace directory, fetch the sources for the required dependencies:
-
-```
-cd ~/intel-compute-runtime/workspace
-
-git clone -b release_40 https://github.com/llvm-mirror/clang clang_source
-
-git clone https://github.com/intel/opencl-clang common_clang
-
-git clone https://github.com/intel/llvm-patches llvm_patches
-
-git clone -b release_40 https://github.com/llvm-mirror/llvm llvm_source
-
-git clone https://github.com/intel/gmmlib gmmlib
-
-git clone https://github.com/intel/intel-graphics-compiler igc
-
-git clone https://github.com/KhronosGroup/OpenCL-Headers khronos
-
-git clone https://github.com/intel/compute-runtime neo
-
-ln -s khronos opencl_headers
-```
-
-Create a build directory for the Intel Graphics Compiler under the workspace:
-
-```
-mkdir -p ~/intel-compute-runtime/workspace/build_igc
-```
-
-Then build:
-
-```
-cd ~/intel-compute-runtime/workspace/build_igc
-
-cmake -DIGC_OPTION__OUTPUT_DIR=../igc-install/Release \
-    -DCMAKE_BUILD_TYPE=Release -DIGC_OPTION__ARCHITECTURE_TARGET=Linux64 \
-    ../igc/IGC
-
-time make -j$(nproc) VERBOSE=1
-```
-
-**Recommended:** Generate Debian archives for installation:
-
-```
-time make -j$(nproc) package VERBOSE=1
-```
-
-Install:
-
-```
-sudo dpkg -i *.deb
-```
-
-(Ran in the build directory) will suffice.
-
-**Add LLVM-4.x to system path:**
-
-Append `:/usr/lib/llvm-4.0/bin:$HOME/bin` at the end of the PATH variable in `/etc/environment` and source the file:
-
-```
-source /etc/environment
-```
-
-**Important:** Either way, make sure that LLVM 4.0 is in your path, as its' required by Intel's OCL runtime.
-
-Next, build and install the `compute runtime project`. Start by creating a separate build directory for it:
-
-```
-mkdir -p ~/intel-compute-runtime/workspace/build_icr
-
-cd ~/intel-compute-runtime/workspace/build_icr
-
-cmake -DCMAKE_BUILD_TYPE=Release ../neo
-
-time make -j$(nproc) package VERBOSE=1
-```
-
-Then install the deb archives:
-
-```
-  sudo dpkg -i *.deb 
-```
-
-From the build directory.
-
-**Testing:**
-
-Use clinfo and confirm that the ICD is detected.
-
-Optionally, run [Luxmark](http://www.luxmark.info/) and confirm that Intel Neo's OpenCL platform is detected and usable.
-
-Be aware that Luxmark, among others, require `freeglut`, which you can install by running:
-
-```
-sudo apt install freeglut3*
-```
-
 **Build the latest libva and all drivers from source:**
 
 **Setup build environment:**
@@ -352,7 +222,138 @@ At this point, issue a reboot:
 sudo systemctl reboot
 ```
 
-Then on resume, proceed with the steps below.
+Then on resume, proceed with the steps below, installing the Intel OpenCL platform (Neo):
+
+**Before you proceed with the iMSDK:**
+
+It is recommended that you build the Intel Neo OpenCL runtime:
+
+**Justification:** This will allow for Intel's MediaSDK OpenCL inter-op back-end to be built. 
+
+**Note:** There's also a Personal Package Archive (PPA) for this that you can add, allowing you to skip the manual build step, as shown:
+
+```
+sudo add-apt-repository ppa:intel-opencl/intel-opencl
+sudo apt-get update
+```
+
+Then install the packages:
+
+    sudo apt install intel-igc-* intel-opencl* intel-cloc intel-cmt-cat
+
+Note that the PPA builds are a bit behind the upstream stack, and as such, these needing the latest version should use the build steps below.
+
+**Install the dependencies for the OpenCL back-end:**
+
+**Build dependencies:**
+
+```
+sudo apt-get install ccache flex bison clang-4.0 cmake g++ git patch zlib1g-dev autoconf xutils-dev libtool pkg-config libpciaccess-dev libz-dev
+```
+
+Create the project structure:
+```
+mkdir -p ~/intel-compute-runtime/workspace
+```
+
+Within this workspace directory, fetch the sources for the required dependencies:
+
+```
+cd ~/intel-compute-runtime/workspace
+
+git clone -b release_40 https://github.com/llvm-mirror/clang clang_source
+
+git clone https://github.com/intel/opencl-clang common_clang
+
+git clone https://github.com/intel/llvm-patches llvm_patches
+
+git clone -b release_40 https://github.com/llvm-mirror/llvm llvm_source
+
+git clone https://github.com/intel/gmmlib gmmlib
+
+git clone https://github.com/intel/intel-graphics-compiler igc
+
+git clone https://github.com/KhronosGroup/OpenCL-Headers khronos
+
+git clone https://github.com/intel/compute-runtime neo
+
+ln -s khronos opencl_headers
+```
+
+Create a build directory for the Intel Graphics Compiler under the workspace:
+
+```
+mkdir -p ~/intel-compute-runtime/workspace/build_igc
+```
+
+Then build:
+
+```
+cd ~/intel-compute-runtime/workspace/build_igc
+
+cmake -DIGC_OPTION__OUTPUT_DIR=../igc-install/Release \
+    -DCMAKE_BUILD_TYPE=Release -DIGC_OPTION__ARCHITECTURE_TARGET=Linux64 \
+    ../igc/IGC
+
+time make -j$(nproc) VERBOSE=1
+```
+
+**Recommended:** Generate Debian archives for installation:
+
+```
+time make -j$(nproc) package VERBOSE=1
+```
+
+Install:
+
+```
+sudo dpkg -i *.deb
+```
+
+(Ran in the build directory) will suffice.
+
+**Add LLVM-4.x to system path:**
+
+Append `:/usr/lib/llvm-4.0/bin:$HOME/bin` at the end of the PATH variable in `/etc/environment` and source the file:
+
+```
+source /etc/environment
+```
+
+**Important:** Either way, make sure that LLVM 4.0 is in your path, as its' required by Intel's OCL runtime.
+
+Next, build and install the `compute runtime project`. Start by creating a separate build directory for it:
+
+```
+mkdir -p ~/intel-compute-runtime/workspace/build_icr
+
+cd ~/intel-compute-runtime/workspace/build_icr
+
+cmake -DCMAKE_BUILD_TYPE=Release ../neo
+
+time make -j$(nproc) package VERBOSE=1
+```
+
+Then install the deb archives:
+
+```
+  sudo dpkg -i *.deb 
+```
+
+From the build directory.
+
+**Testing:**
+
+Use clinfo and confirm that the ICD is detected.
+
+Optionally, run [Luxmark](http://www.luxmark.info/) and confirm that Intel Neo's OpenCL platform is detected and usable.
+
+Be aware that Luxmark, among others, require `freeglut`, which you can install by running:
+
+```
+sudo apt install freeglut3*
+```
+
 
 **4. Build [Intel's MSDK](https://github.com/Intel-Media-SDK/MediaSDK):**
 
