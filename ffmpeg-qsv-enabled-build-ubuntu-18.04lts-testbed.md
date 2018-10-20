@@ -312,6 +312,14 @@ sudo dpkg -i *.deb
 
 (Ran in the build directory) will suffice.
 
+For other Linux distributions, or to install directly without having to generate debian archives, run:
+
+```
+sudo make -j$(nproc) install VERBOSE=1
+```
+
+Then proceed.
+
 **Add LLVM-4.x to system path:**
 
 Append `:/usr/lib/llvm-4.0/bin:$HOME/bin` at the end of the PATH variable in `/etc/environment` and source the file:
