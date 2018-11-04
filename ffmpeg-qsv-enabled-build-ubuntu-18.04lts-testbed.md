@@ -36,7 +36,17 @@ mkdir -p ~/ffmpeg_sources
 mkdir -p ~/bin
 ```
 
-Build the dependency chain as shown:
+Build the dependency chain as shown, starting with installing the latest build of [libdrm](https://01.org/linuxgraphics/community/libdrm). This is needed to enable the [cl_intel_va_api_media_sharing](https://www.khronos.org/registry/OpenCL/extensions/intel/cl_intel_va_api_media_sharing.txt) extension, needed when deriving OpenCL device initialization interop in FFmpeg, as illustrated later on in the documentation:
+
+    cd ~/vaapi
+    git clone https://anongit.freedesktop.org/git/mesa/drm.git libdrm
+    cd libdrm
+    ./configure --prefix=/usr --enable-udev
+    time make -j$(nproc) VERBOSE=1
+    sudo make -j$(nproc) install
+    sudo ldconfig -vvvv
+
+Then proceed with libva:
 
 **1. [Libva :](https://github.com/intel/libva)**
 
@@ -312,11 +322,14 @@ sudo dpkg -i *.deb
 
 (Ran in the build directory) will suffice.
 
-For other Linux distributions, or to install directly without having to generate debian archives, run:
 
-```
-sudo make -j$(nproc) install VERBOSE=1
-```
+**To install directly without relying on the package manager:**
+
+On whatever Linux distribution you're on, you can also run:
+
+    sudo make -j$(nproc) install
+
+If you prefer to skip the generated binary artifacts by cpack. This may solve package installation and dependency issues that some of you are encountering.
 
 Then proceed.
 
@@ -349,6 +362,14 @@ Then install the deb archives:
 ```
 
 From the build directory.
+
+**To install directly without relying on the package manager:**
+
+On whatever Linux distribution you're on, you can also run:
+
+    sudo make -j$(nproc) install
+
+If you prefer to skip the generated binary artifacts by cpack. This may solve package installation and dependency issues that some of you are encountering.
 
 **Testing:**
 
