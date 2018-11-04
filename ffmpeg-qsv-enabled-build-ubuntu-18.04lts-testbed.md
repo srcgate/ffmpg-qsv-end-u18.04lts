@@ -350,7 +350,7 @@ mkdir -p ~/intel-compute-runtime/workspace/build_icr
 
 cd ~/intel-compute-runtime/workspace/build_icr
 
-cmake -DCMAKE_BUILD_TYPE=Release ../neo
+cmake -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release ../neo
 
 time make -j$(nproc) package VERBOSE=1
 ```
@@ -517,7 +517,7 @@ If you encounter errors above (with Intel's Perl configurator), use the CMake ro
 ```
 mkdir -p ~/vaapi/build_msdk
 cd ~/vaapi/build_msdk
-cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_WAYLAND=ON -DENABLE_X11_DRI3=ON  ../msdk
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_WAYLAND=ON -DENABLE_X11_DRI3=ON -DENABLE_OPENCL=ON  ../msdk
 time make -j$(nproc) VERBOSE=1
 sudo make install -j$(nproc) VERBOSE=1
 ```
