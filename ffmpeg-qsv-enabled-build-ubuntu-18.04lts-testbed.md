@@ -41,7 +41,7 @@ Build the dependency chain as shown, starting with installing the latest build o
     cd ~/vaapi
     git clone https://anongit.freedesktop.org/git/mesa/drm.git libdrm
     cd libdrm
-    ./configure --prefix=/usr --enable-udev
+    ./autogen.sh --prefix=/usr --enable-udev
     time make -j$(nproc) VERBOSE=1
     sudo make -j$(nproc) install
     sudo ldconfig -vvvv
