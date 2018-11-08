@@ -82,6 +82,14 @@ cmake -DCMAKE_BUILD_TYPE= Release -DARCH= 64 ../gmmlib
 make -j$(nproc)
 ```
 
+Then install the package:
+
+```
+sudo make -j$(nproc) install 
+```
+And proceed.
+
+
 **3. [Intel Media driver:](https://github.com/intel/media-driver)**
 
 The Intel(R) Media Driver for VAAPI is a new VA-API (Video Acceleration API) user mode driver supporting hardware accelerated decoding, encoding, and video post processing for GEN based graphics hardware, released under the MIT license.
