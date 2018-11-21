@@ -358,7 +358,7 @@ mkdir -p ~/intel-compute-runtime/workspace/build_icr
 
 cd ~/intel-compute-runtime/workspace/build_icr
 
-cmake -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release ../neo
+cmake -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release -DSKIP_UNIT_TESTS=1 ../neo
 
 time make -j$(nproc) package VERBOSE=1
 ```
