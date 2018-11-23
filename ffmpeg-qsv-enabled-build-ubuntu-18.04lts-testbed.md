@@ -82,7 +82,7 @@ cd ~/vaapi/workspace
 git clone https://github.com/intel/gmmlib
 mkdir -p build
 cd build
-cmake -DCMAKE_BUILD_TYPE= Release -DARCH= 64 ../gmmlib
+cmake -DCMAKE_BUILD_TYPE= Release ../gmmlib
 make -j$(nproc)
 ```
 
