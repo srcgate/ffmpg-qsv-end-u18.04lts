@@ -291,6 +291,8 @@ git clone https://github.com/intel/llvm-patches llvm_patches
 
 git clone -b release_40 https://github.com/llvm-mirror/llvm llvm_source
 
+git clone -b release_70 https://github.com/llvm-mirror/llvm llvm7.0.0_source
+
 git clone https://github.com/intel/gmmlib gmmlib
 
 git clone https://github.com/intel/intel-graphics-compiler igc
