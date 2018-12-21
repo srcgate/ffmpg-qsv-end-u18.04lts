@@ -315,9 +315,7 @@ Then build:
 ```
 cd ~/intel-compute-runtime/workspace/build_igc
 
-cmake -DIGC_OPTION__OUTPUT_DIR=../igc-install/Release \
-    -DCMAKE_BUILD_TYPE=Release -DIGC_OPTION__ARCHITECTURE_TARGET=Linux64 \
-    ../igc/IGC
+cmake -DIGC_OPTION__OUTPUT_DIR=../igc-install/Release ../igc/IGC
 
 time make -j$(nproc) VERBOSE=1
 ```
