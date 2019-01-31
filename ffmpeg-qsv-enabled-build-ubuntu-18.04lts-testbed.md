@@ -285,7 +285,7 @@ cd ~/intel-compute-runtime/workspace
 
 git clone -b release_40 https://github.com/llvm-mirror/clang clang_source
 
-git clone https://github.com/intel/opencl-clang common_clang
+git clone -b ocl-open-40 https://github.com/intel/opencl-clang common_clang
 
 git clone https://github.com/intel/llvm-patches llvm_patches
 
