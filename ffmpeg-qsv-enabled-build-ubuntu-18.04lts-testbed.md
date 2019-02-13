@@ -813,15 +813,15 @@ Take the example snippet below, which takes the safest (and not necessarily the 
 
 ```
 ffmpeg -re -stream_loop -1 -threads n -loglevel debug -filter_complex_threads n \
--init_hw_device qsv=qsv:MFX_IMPL_hw_any -hwaccel qsv -filter_hw_device qsv \
+-init_hw_device qsv=qsv:hw -hwaccel qsv -filter_hw_device qsv \
 -i 'udp://$stream_url:$port?fifo_size=9000000' \
--filter_complex "[0:v]split=6[s0][s1][s2][s3][s4][s5]; \
-[s0]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=1920:1080:format=nv12[v0]; \
-[s1]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=1280:720:format=nv12[v1];
-[s2]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=960:540:format=nv12[v2];
-[s3]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=842:480:format=nv12[v3];
-[s4]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=480:360:format=nv12[v4];
-[s5]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=426:240:format=nv12[v5]" \
+-filter_complex "[0:v]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,split=6[s0][s1][s2][s3][s4][s5]; \
+[s0]hwupload=extra_hw_frames=10,scale_qsv=1920:1080:format=nv12[v0]; \
+[s1]hwupload=extra_hw_frames=10,scale_qsv=1280:720:format=nv12[v1];
+[s2]hwupload=extra_hw_frames=10,scale_qsv=960:540:format=nv12[v2];
+[s3]hwupload=extra_hw_frames=10,scale_qsv=842:480:format=nv12[v3];
+[s4]hwupload=extra_hw_frames=10,scale_qsv=480:360:format=nv12[v4];
+[s5]hwupload=extra_hw_frames=10,scale_qsv=426:240:format=nv12[v5]" \
 -b:v:0 2250k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
 -b:v:1 1750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
 -b:v:2 1000k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
@@ -930,13 +930,13 @@ If you're after a **full hardware-accelerated transcode pipeline** (use with cau
 ffmpeg -re -stream_loop -1 -threads n -loglevel debug -filter_complex_threads n \
 -c:v h264_qsv -hwaccel qsv \
 -i 'udp://$stream_url:$port?fifo_size=9000000' \
--filter_complex "[0:v]split=6[s0][s1][s2][s3][s4][s5]; \
-[s0]vpp_qsv=deinterlace=2,scale_qsv=1920:1080:format=nv12[v0]; \
-[s1]vpp_qsv=deinterlace=2,scale_qsv=1280:720:format=nv12[v1];
-[s2]vpp_qsv=deinterlace=2,scale_qsv=960:540:format=nv12[v2];
-[s3]vpp_qsv=deinterlace=2,scale_qsv=842:480:format=nv12[v3];
-[s4]vpp_qsv=deinterlace=2,scale_qsv=480:360:format=nv12[v4];
-[s5]vpp_qsv=deinterlace=2,scale_qsv=426:240:format=nv12[v5]" \
+-filter_complex "[0:v]vpp_qsv=deinterlace=2,split=6[s0][s1][s2][s3][s4][s5]; \
+[s0]scale_qsv=1920:1080:format=nv12[v0]; \
+[s1]scale_qsv=1280:720:format=nv12[v1];
+[s2]scale_qsv=960:540:format=nv12[v2];
+[s3]scale_qsv=842:480:format=nv12[v3];
+[s4]scale_qsv=480:360:format=nv12[v4];
+[s5]scale_qsv=426:240:format=nv12[v5]" \
 -b:v:0 2250k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
 -b:v:1 1750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
 -b:v:2 1000k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
