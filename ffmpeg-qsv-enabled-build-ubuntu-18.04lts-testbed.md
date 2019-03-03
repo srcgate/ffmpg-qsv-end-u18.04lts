@@ -8,7 +8,7 @@ Build platform: Ubuntu 18.04LTS
 
 **Install baseline dependencies first (inclusive of OpenCL headers+)**
 
-`sudo apt-get -y install autoconf automake build-essential libass-dev libtool pkg-config texinfo zlib1g-dev libva-dev cmake mercurial libdrm-dev libvorbis-dev libogg-dev git libx11-dev libperl-dev libpciaccess-dev libpciaccess0 xorg-dev intel-gpu-tools opencl-headers libwayland-dev xutils-dev ocl-icd-*`
+`sudo apt-get -y install autoconf automake build-essential libass-dev libtool pkg-config texinfo zlib1g-dev libva-dev cmake mercurial libdrm-dev libvorbis-dev libogg-dev git libx11-dev libperl-dev libpciaccess-dev libpciaccess0 xorg-dev intel-gpu-tools opencl-headers libwayland-dev xutils-dev ocl-icd-* libssl-dev `
 
 Then add the Oibaf PPA, needed to install the latest development headers for libva:
 
@@ -270,7 +270,7 @@ Note that the PPA builds are a bit behind the upstream stack, and as such, these
 **Build dependencies:**
 
 ```
-sudo apt-get install ccache flex bison clang-4.0 cmake g++ git patch zlib1g-dev autoconf xutils-dev libtool pkg-config libpciaccess-dev libz-dev
+sudo apt-get install ccache flex bison cmake g++ git patch zlib1g-dev autoconf xutils-dev libtool pkg-config libpciaccess-dev libz-dev
 ```
 
 Create the project structure:
@@ -282,26 +282,13 @@ Within this workspace directory, fetch the sources for the required dependencies
 
 ```
 cd ~/intel-compute-runtime/workspace
-
-git clone -b release_40 https://github.com/llvm-mirror/clang clang_source
-
-git clone -b ocl-open-40 https://github.com/intel/opencl-clang common_clang
-
+git clone -b release_70 https://github.com/llvm-mirror/llvm llvm_source
+git clone -b release_70 https://github.com/llvm-mirror/clang llvm_source/tools/clang
+git clone -b ocl-open-70 https://github.com/intel/opencl-clang llvm_source/projects/opencl-clang
+git clone -b llvm_release_70 https://github.com/KhronosGroup/SPIRV-LLVM-Translator llvm_source/projects/llvm-spirv
 git clone https://github.com/intel/llvm-patches llvm_patches
-
-git clone -b release_40 https://github.com/llvm-mirror/llvm llvm_source
-
-git clone -b release_70 https://github.com/llvm-mirror/llvm llvm7.0.0_source
-
-git clone https://github.com/intel/gmmlib gmmlib
-
 git clone https://github.com/intel/intel-graphics-compiler igc
-
-git clone https://github.com/KhronosGroup/OpenCL-Headers khronos
-
 git clone https://github.com/intel/compute-runtime neo
-
-ln -s khronos opencl_headers
 ```
 
 Create a build directory for the Intel Graphics Compiler under the workspace:
@@ -314,9 +301,7 @@ Then build:
 
 ```
 cd ~/intel-compute-runtime/workspace/build_igc
-
-cmake -DIGC_OPTION__OUTPUT_DIR=../igc-install/Release ../igc/IGC
-
+cmake ../igc/IGC
 time make -j$(nproc) VERBOSE=1
 ```
 
@@ -345,32 +330,19 @@ If you prefer to skip the generated binary artifacts by cpack. This may solve pa
 
 Then proceed.
 
-**Add LLVM-4.x to system path:**
-
-Append `:/usr/lib/llvm-4.0/bin:$HOME/bin` at the end of the PATH variable in `/etc/environment` and source the file:
-
-```
-source /etc/environment
-```
-
-**Important:** Either way, make sure that LLVM 4.0 is in your path, as its' required by Intel's OCL runtime.
-
 Next, build and install the `compute runtime project`. Start by creating a separate build directory for it:
 
 ```
 mkdir -p ~/intel-compute-runtime/workspace/build_icr
-
 cd ~/intel-compute-runtime/workspace/build_icr
-
 cmake -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release -DSKIP_UNIT_TESTS=1 ../neo
-
 time make -j$(nproc) package VERBOSE=1
 ```
 
 Then install the deb archives:
 
 ```
-  sudo dpkg -i *.deb 
+sudo dpkg -i *.deb 
 ```
 
 From the build directory.
@@ -400,98 +372,8 @@ sudo apt install freeglut3*
 
 This package provides an API to access hardware-accelerated video decode, encode and filtering on Intel® platforms with integrated graphics. It is supported on platforms that the intel-media-driver is targeted for. 
 
-# Media Features Summary
-
-## Supported Decoding Format and Resolution
-
-Supported decoding output format and max resolution: 
-
-(2k=2048x2048, 4k=4096x4096, 8k=8192x8192, 16k=16384x16384)
-
-| Codec      | Type     | BDW  | SKL  | BXT/APL | KBL  | CFL  | WHL  | CNL  | ICL            |
-|------------|----------|------|------|---------|------|------|------|------|----------------|
-| AVC        |Output    | NV12 | NV12 |  NV12   | NV12 | NV12 | NV12 | NV12 | NV12           |
-|            |Max Res.  | 4k   | 4k   |  4k     | 4k   | 4k   | 4k   | 4k   | 4k             |
-| MPEG-2     |Output    | NV12 | NV12 |  NV12   | NV12 | NV12 | NV12 | NV12 | NV12           |
-|            |Max Res.  | 2k   | 2k   |  2k     | 2k   | 2k   | 2k   | 2k   | 2k             |
-| VC-1       |Output    | NV12 | NV12 |  NV12   | NV12 | NV12 | NV12 | NV12 | NV12           |
-|            |Max Res.  | 4k   | 4k   |  4k     | 4k   | 4k   | 4k   | 4k   | 4k             |
-| JPEG*      |Max Res.  | 16k  | 16k  |  16k    | 16k  | 16k  | 16k  | 16k  | 16k            |
-| VP8        |Output    | NV12 | NV12 |  NV12   | NV12 | NV12 | NV12 | NV12 | NV12           |
-|            |Max Res.  | 4k   | 4k   |  4k     | 4k   | 4k   | 4k   | 4k   | 4k             |
-| HEVC 8bit  |Output    |      | NV12 |  NV12   | NV12 | NV12 | NV12 | NV12 | NV12/YUY2/AYUV |
-|            |Max Res.  |      | 8k   |  8k     | 8k   | 8k   | 8k   | 8k   | 8k             |
-| HEVC 10bit |Output    |      |      |  P010   | P010 | P010 | P010 | P010 | P010/Y210/Y410 |
-|            |Max Res.  |      |      |  8k     | 8k   | 8k   | 8k   | 8k   | 8k             |
-| VP9  8bit  |Output    |      |      |  NV12   | NV12 | NV12 | NV12 | NV12 | NV12/AYUV      |
-|            |Max Res.  |      |      |  4k     | 8k   | 8k   | 8k   | 8k   | 8k             |
-| VP9  10bit |Output    |      |      |         | P010 | P010 | P010 | P010 | P010/Y410      |
-|            |Max Res.  |      |      |         | 8k   | 8k   | 8k   | 8k   | 8k             |
-
-\* JPEG output format: NV12/411P/422H/422V/444P/BGRP/RGBP/YUY2/ARGB
-
-
-## Supported Encoding Format and Resolution
-
-### HW Encoding:
-
-Supported input format and max resoultuion: 
-
-(4k=4096x4096, 16k=16384x16384)
-
-| Codec      | Type       | BDW  | SKL  | BXT/APL | KBL  | CFL   |  WHL  | CNL  | ICL***         |
-|------------|------------|------|------|---------|------|-------|-------|------|----------------|
-| AVC        |Input       |      |      |  NV12   | More*| More* | More* |      | More*          |
-|            |Max Res.    |      |      |  4k     | 4k   | 4k    | 4k    |      | 4k             |
-| JPEG       |Input/Output|      |Note**| Note**  |Note**|Note** |Note** |Note**| Note**         |
-|            |Max Res.    |      | 16k  |  16k    | 16k  | 16k   | 16k   | 16k  | 16k            |
-| HEVC 8bit  |Input       |      |      |         |      |       |       |      | NV12/AYUV      |
-|            |Max Res.    |      |      |         |      |       |       |      | 8K             |
-| HEVC 10bit |Input       |      |      |         |      |       |       |      | P010/Y410      |
-|            |Max Res.    |      |      |         |      |       |       |      | 8k             |
-| VP9  8bit  |Input       |      |      |         |      |       |       |      | NV12/AYUV      |
-|            |Max Res.    |      |      |         |      |       |       |      | 8k             |
-| VP9  10bit |Input       |      |      |         |      |       |       |      | P010/Y410      |
-|            |Max Res.    |      |      |         |      |       |       |      | 8k             |
-
-\* KBL/CFL/ICL AVC encoding supported input formats: NV12/YUY2/YUYV/YVYU/UYVY/AYUV/ARGB
-
-\** JPEG encoding supports input format NV12/YUY2/UYVY/AYUV/ABGR/Y8 and output format YUV400/YUV420/YUV422H_2Y/YUV444/RGB24. 
-
-\*** ICL encoding is pending on i915 support on upstream, for more information, please check [Known Issues and Limitations #5](https://github.com/intel/media-driver/blob/master/README.md#known-issues-and-limitations).
-
-
-### HW+Shader Encoding:
-
-Supported input format and max resolution: 
-
-(2k=2048x2048, 4k=4096x4096, 8k=8192x8192)
-
-| Codec      | Type       | BDW  | SKL  | BXT/APL | KBL  | CFL  |  WHL | CNL  | ICL*           |
-|------------|------------|------|------|---------|------|------|------|------|----------------|
-| AVC        |Input       | NV12 | NV12 |  NV12   | NV12 | NV12 | NV12 | NV12 | NV12           |
-|            |Max Res.    | 4k   | 4k   |  4k     | 4k   | 4k   | 4k   | 4k   | 4k             |
-| MPEG2      |Input       | NV12 | NV12 |         | NV12 | NV12 | NV12 | NV12 | NV12           |
-|            |Max Res.    | 2k   | 2k   |         | 2k   | 2k   | 2k   | 2k   | 2k             |
-| VP8        |Input       |      |      |         |      |      | NV12 | NV12 | NV12           |
-|            |Max Res.    |      |      |         |      |      | 4k   | 4k   | 4k             |
-| HEVC 8bit  |Input       |      | NV12 |  NV12   | NV12 | NV12 | NV12 | NV12 | NV12/AYUV      |
-|            |Max Res.    |      | 8k   |  8k     | 8k   | 8k   | 8k   | 8k   | 8k             |
-| HEVC 10bit |Input       |      |      |         |      |      |      | NV12 | P010/Y410      |
-|            |Max Res.    |      |      |         |      |      |      | 8k   | 8k             |
-
-\* ICL encoding is pending on i915 support on upstream, for more information, please check [Known Issues and Limitations #5](https://github.com/intel/media-driver/blob/master/README.md#known-issues-and-limitations).
-
-## Supported Video Processing CSC/Scaling Format
-
-|    Platform           | Format | NV12 | YV12 | I420 | P010 | YUY2 | UYVY | Y210 | AYUV | Y410 |
-|-----------------------|--------|------|------|------|------|------|------|------|------|------|
-|      BDW              | Input  |  Y   |  Y   |  Y   |      |  Y   |      |      |      |      |
-|                       | Output |  Y   |  Y   |  Y   |      |  Y   |      |      |      |      |
-|SKL/BXT/APL/KBL/CFL/WHL| Input  |  Y   |  Y   |  Y   |  Y   |  Y   |      |      |      |      |
-|                       | Output |  Y   |  Y   |  Y   |      |  Y   |      |      |      |      |
-|      ICL              | Input  |  Y   |  Y   |  Y   |  Y   |  Y   |  Y   |  Y   |  Y   |  Y   |
-|                       | Output |  Y   |  Y   |  Y   |  Y   |  Y   |      |  Y   |  Y   |  Y   |
+For supported features per generation, see [this](https://github.com/intel/media-driver/blob/master/README.md).
+   
 
 **Build steps:**
 
@@ -505,39 +387,7 @@ git submodule init
 git pull
 ```
 
-(b). Configure the build with GCC:
-
-There are two options here, namely, using Intel's Perl builder configurator, or better still, the Cmake route:
-
-(i). For Apollo Lake:
-
-```
-perl tools/builder/build_mfx.pl --cmake=intel64.make.release --target=BXT
-```
-
-(ii). For SKL:
-
-```
-perl tools/builder/build_mfx.pl --cmake=intel64.make.release 
-```
-
-This will build MSDK binaries and MSDK samples.
-
-(c ). Run the build:
-
-```
-make -j$(nproc) -C __cmake/intel64.make.release
-```
-
-(d). And install:
-
-`cd __cmake/intel64.make.release`
-
-`sudo make -j$(nproc) install`
-
-**Recommended:** With the Cmake route:
-
-If you encounter errors above (with Intel's Perl configurator), use the CMake route below:
+(b). Configure the build:
 
 ```
 mkdir -p ~/vaapi/build_msdk
@@ -548,13 +398,6 @@ sudo make install -j$(nproc) VERBOSE=1
 ```
 
 CMake will automatically detect the platform you're on and enable the platform-specific hooks needed for a working build.
-
-**Obsolete:** Apply this workaround (no longer needed as its' the default upstream):
-
-```
-sudo mkdir -p /opt/intel/mediasdk/include/mfx
-sudo cp -vr /opt/intel/mediasdk/include/*.h  /opt/intel/mediasdk/include/mfx
-```
 
 Create a library config file for the iMSDK:
 
@@ -577,38 +420,13 @@ sudo ldconfig -vvvv
 
 To proceed.
 
-Confirm that `/opt/intel/mediasdk/lib/pkgconfig/libmfx.pc` and `/opt/mediasdk/lib/pkgconfig/mfx.pc` are populated correctly:
-
-```
-Name: mfx
-Description: Intel(R) Media SDK Dispatcher
-Version: 1.26  ((MFX_VERSION) % 1000)
-
-prefix=/opt/intel/mediasdk
-libdir=/opt/intel/mediasdk/lib
-includedir=/opt/intel/mediasdk/include
-Libs: -L${libdir} -lmfx -lstdc++ -ldl -lva -lstdc++ -ldl -lva-drm -ldrm
-Cflags: -I${includedir} -I/usr/include/libdrm
-
-```
 
 When done, issue a reboot:
 
 ```
  sudo systemctl reboot
-
 ```
 
-**Known Issues and Limitations:**
-
-For validation, consider the following known issues:
-
-1.  SKL: Green or other incorrect color will be observed in output frames when using YV12/I420 as input format for csc/scaling/blending/rotation, etc. on Ubuntu 16.04 stock (with kernel 4.10). The issue can be addressed with the kernel patch: [WaEnableYV12BugFixInHalfSliceChicken7 commit](https://cgit.freedesktop.org/drm-tip/commit/?id=0b71cea29fc29bbd8e9dd9c641fee6bd75f68274).
-    
-2.  CNL: Functionalities requiring HuC including AVC BRC for low power encoding, HEVC low power encoding, and VP9 low power encoding are pending on the kernel patch for GuC support which is expected in Q1’2018.
-    
-3.  BXT/APL: Limited validation was performed; product quality expected in Q1’2018.
-    
 
 **Build a usable FFmpeg binary with the iMSDK:**
 
@@ -739,6 +557,7 @@ PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig:/opt/in
   --enable-libfdk-aac \
   --enable-libx264 \
   --enable-libx265 \
+  --enable-openssl \
   --extra-libs=-lpthread \
   --enable-nonfree 
 PATH="$HOME/bin:$PATH" make -j$(nproc) 
@@ -904,18 +723,18 @@ Conversion failed!
 -init_hw_device qsv=qsv:MFX_IMPL_hw_any -hwaccel qsv -filter_hw_device qsv
 ```
 
-That ensures that the proper hardware accelerator node (`qsv`) is initialized with the proper device context (`-init_hw_device qsv=qsv:MFX_IMPL_hw_any`) with device nodes for a hardware accelerator implementation being inherited `(-hwaccel qsv`) with an appropriate filter device (`-filter_hw_device qsv`) are initialized for resource allocation by the `hwupload` filter, the `vpp_qsv` post-processor (needed for advanced deinterlacing) and the `scale_vpp` filter (needed for texture format conversion to nv12, otherwise the encoder will fail).
+That ensures that the proper hardware accelerator node (`qsv`) is initialized with the proper device context (`-init_hw_device qsv=qsv:hw`) with device nodes for a hardware accelerator implementation being inherited `(-hwaccel qsv`) with an appropriate filter device (`-filter_hw_device qsv`) are initialized for resource allocation by the `hwupload` filter, the `vpp_qsv` post-processor (needed for advanced deinterlacing) and the `scale_vpp` filter (needed for texture format conversion to nv12, otherwise the encoder will fail).
 
 If hardware scaling is undesired, the filter chain can be modified from:
 
 ```
-[sn]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=W:H:format=nv12[vn]
+[sn]hwupload=extra_hw_frames=10,scale_qsv=W:H:format=nv12[vn]
 ```
 
 To:
 
 ```
-[sn]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,scale_qsv=format=nv12[vn]
+[sn]hwupload=extra_hw_frames=10,scale_qsv=format=nv12[vn]
 ```
 
 Where `n` is the stream specifier id inherited from the complex filter chain. Note that the texture conversion is mandatory, and cannot be skipped.
