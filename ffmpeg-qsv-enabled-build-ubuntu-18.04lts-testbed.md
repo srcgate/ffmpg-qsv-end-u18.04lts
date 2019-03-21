@@ -648,7 +648,7 @@ ffmpeg -re -stream_loop -1 -threads n -loglevel debug -filter_complex_threads n 
 -b:v:4 750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
 -b:v:5 640k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
 -c:a aac -b:a 128k -ar 48000 -ac 2 \
--flags -global_header -f tee -use_fifo 1 \
+-flags -global_header -f tee  \
 -map "[v0]" -map "[v1]" -map "[v2]" -map "[v3]" -map "[v4]" -map "[v5]" -map 0:a:0 -map 0:a:1 \
 "[select=\'v:0,a\':f=mpegts]udp:$stream_url_out:$port_out| \
  [select=\'v:0,a\':f=mpegts]udp://$stream_url_out:$port_out| \
@@ -763,7 +763,7 @@ ffmpeg -re -stream_loop -1 -threads n -loglevel debug -filter_complex_threads n 
 -b:v:4 750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
 -b:v:5 640k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
 -c:a aac -b:a 128k -ar 48000 -ac 2 \
--flags -global_header -f tee -use_fifo 1 \
+-flags -global_header -f tee  \
 -map "[v0]" -map "[v1]" -map "[v2]" -map "[v3]" -map "[v4]" -map "[v5]" -map 0:a:0 -map 0:a:1 \
 "[select=\'v:0,a\':f=mpegts]udp:$stream_url_out:$port_out| \
  [select=\'v:0,a\':f=mpegts]udp://$stream_url_out:$port_out| \
