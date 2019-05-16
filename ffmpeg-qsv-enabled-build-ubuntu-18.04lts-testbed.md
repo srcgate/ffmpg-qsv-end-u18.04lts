@@ -302,13 +302,13 @@ Then build:
 ```
 cd ~/intel-compute-runtime/workspace/build_igc
 cmake ../igc/IGC
-time make -j$(nproc) VERBOSE=1
+time make -j1 VERBOSE=1
 ```
 
 **Recommended:** Generate Debian archives for installation:
 
 ```
-time make -j$(nproc) package VERBOSE=1
+time make -j1 package VERBOSE=1
 ```
 
 Install:
@@ -324,7 +324,7 @@ sudo dpkg -i *.deb
 
 On whatever Linux distribution you're on, you can also run:
 
-    sudo make -j$(nproc) install
+    sudo make -j1 install
 
 If you prefer to skip the generated binary artifacts by cpack. This may solve package installation and dependency issues that some of you are encountering.
 
@@ -351,7 +351,7 @@ From the build directory.
 
 On whatever Linux distribution you're on, you can also run:
 
-    sudo make -j$(nproc) install
+    sudo make -j1 install
 
 If you prefer to skip the generated binary artifacts by cpack. This may solve package installation and dependency issues that some of you are encountering.
 
