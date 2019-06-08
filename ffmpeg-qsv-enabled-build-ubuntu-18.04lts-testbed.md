@@ -17,6 +17,17 @@ sudo add-apt-repository ppa:oibaf/graphics-drivers
 sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get -y dist-upgrade
 ```
 
+**Configure git:**
+
+This will be needed by some projects below, such as when building `opencl-clang`. Use your credentials, as you see fit:
+
+```sh
+git config --global user.name "FirstName LastName"
+git config --global user.email "your@email.com"
+```
+
+Then proceed.
+
 **To address linker problems down the line with Ubuntu 18.04LTS:**
 
 Referring to this: https://forum.openframeworks.cc/t/ubuntu-unable-to-compile-missing-glx-mesa/29367/2
