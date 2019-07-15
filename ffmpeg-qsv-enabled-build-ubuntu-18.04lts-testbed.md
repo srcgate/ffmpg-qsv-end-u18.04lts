@@ -259,7 +259,7 @@ Then on resume, proceed with the steps below, installing the Intel OpenCL platfo
 
 **Before you proceed with the iMSDK:**
 
-It is recommended that you build the Intel Neo OpenCL runtime:
+It is recommended that you install the Intel Neo OpenCL runtime:
 
 **Justification:** This will allow for Intel's MediaSDK OpenCL inter-op back-end to be built. 
 
@@ -274,7 +274,7 @@ Then install the packages:
 
     sudo apt install intel-*
 
-Note that the PPA builds are a bit behind the upstream stack, and as such, these needing the latest version should use the build steps below.
+Then proceed.
 
 **Install the dependencies for the OpenCL back-end:**
 
@@ -284,87 +284,6 @@ Note that the PPA builds are a bit behind the upstream stack, and as such, these
 sudo apt-get install ccache flex bison cmake g++ git patch zlib1g-dev autoconf xutils-dev libtool pkg-config libpciaccess-dev libz-dev
 ```
 
-Create the project structure:
-```
-mkdir -p ~/intel-compute-runtime/workspace
-```
-
-Within this workspace directory, fetch the sources for the required dependencies:
-
-```
-cd ~/intel-compute-runtime/workspace
-git clone -b release_70 https://github.com/llvm-mirror/llvm llvm_source
-git clone -b release_70 https://github.com/llvm-mirror/clang llvm_source/tools/clang
-git clone -b ocl-open-70 https://github.com/intel/opencl-clang llvm_source/projects/opencl-clang
-git clone -b llvm_release_70 https://github.com/KhronosGroup/SPIRV-LLVM-Translator llvm_source/projects/llvm-spirv
-git clone https://github.com/intel/llvm-patches llvm_patches
-git clone https://github.com/intel/intel-graphics-compiler igc
-git clone https://github.com/intel/compute-runtime neo
-```
-
-Create a build directory for the Intel Graphics Compiler under the workspace:
-
-```
-mkdir -p ~/intel-compute-runtime/workspace/build_igc
-```
-
-Then build:
-
-```
-cd ~/intel-compute-runtime/workspace/build_igc
-cmake ../igc/IGC
-time make -j$(nproc) VERBOSE=1
-```
-
-**Recommended:** Generate Debian archives for installation:
-
-```
-time make -j$(nproc) package VERBOSE=1
-```
-
-Install:
-
-```
-sudo dpkg -i *.deb
-```
-
-(Ran in the build directory) will suffice.
-
-
-**To install directly without relying on the package manager:**
-
-On whatever Linux distribution you're on, you can also run:
-
-    sudo make -j$(nproc) install
-
-If you prefer to skip the generated binary artifacts by cpack. This may solve package installation and dependency issues that some of you are encountering.
-
-Then proceed.
-
-Next, build and install the `compute runtime project`. Start by creating a separate build directory for it:
-
-```
-mkdir -p ~/intel-compute-runtime/workspace/build_icr
-cd ~/intel-compute-runtime/workspace/build_icr
-cmake -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release -DSKIP_UNIT_TESTS=1 ../neo
-time make -j$(nproc) package VERBOSE=1
-```
-
-Then install the deb archives:
-
-```
-sudo dpkg -i *.deb 
-```
-
-From the build directory.
-
-**To install directly without relying on the package manager:**
-
-On whatever Linux distribution you're on, you can also run:
-
-    sudo make -j$(nproc) install
-
-If you prefer to skip the generated binary artifacts by cpack. This may solve package installation and dependency issues that some of you are encountering.
 
 **Testing:**
 
@@ -449,9 +368,9 @@ Note that we've now switched away from Yasm to nasm, as this is the current asse
 
 ```
 cd ~/ffmpeg_sources
-wget wget http://www.nasm.us/pub/nasm/releasebuilds/2.14rc0/nasm-2.14rc0.tar.gz
-tar xzvf nasm-2.14rc0.tar.gz
-cd nasm-2.14rc0
+wget wget http://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.gz
+tar xzvf nasm-2.14.02.tar.gz
+cd nasm-2.14.02
 ./configure --prefix="$HOME/ffmpeg_build" --bindir="$HOME/bin" 
 make -j$(nproc) VERBOSE=1
 make -j$(nproc) install
@@ -465,7 +384,7 @@ make -j$(nproc) distclean
 cd ~/ffmpeg_sources
 git clone http://git.videolan.org/git/x264.git -b stable
 cd x264/
-PATH="$HOME/bin:$PATH" ./configure --prefix="$HOME/ffmpeg_build" --enable-static --enable-shared
+PATH="$HOME/bin:$PATH" ./configure --prefix="$HOME/ffmpeg_build" --enable-static
 PATH="$HOME/bin:$PATH" make -j$(nproc) VERBOSE=1
 make -j$(nproc) install VERBOSE=1
 make -j$(nproc) distclean
@@ -488,9 +407,8 @@ make -j$(nproc) clean VERBOSE=1
 
 ```
 cd ~/ffmpeg_sources
-wget -O fdk-aac.tar.gz https://github.com/mstorsjo/fdk-aac/tarball/master
-tar xzvf fdk-aac.tar.gz
-cd mstorsjo-fdk-aac*
+git clone https://github.com/mstorsjo/fdk-aac
+cd fdk-aac
 autoreconf -fiv
 ./configure --prefix="$HOME/ffmpeg_build" --disable-shared
 make -j$(nproc)
@@ -517,9 +435,9 @@ time make distclean
 
 ```
 cd ~/ffmpeg_sources
-wget -c -v http://downloads.xiph.org/releases/vorbis/libvorbis-1.3.6.tar.xz
-tar -xvf libvorbis-1.3.6.tar.xz
-cd libvorbis-1.3.6
+git clone https://github.com/xiph/vorbis
+cd vorbis
+./autogen.sh -ivf
 ./configure --enable-static --prefix="$HOME/ffmpeg_build"
 time make -j$(nproc)
 time make -j$(nproc) install
@@ -549,10 +467,10 @@ git clone https://github.com/FFmpeg/FFmpeg -b master
 cd FFmpeg
 PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig:/opt/intel/mediasdk/lib/pkgconfig" ./configure \
   --pkg-config-flags="--static" \
-  --prefix="$HOME/bin" \
+  --prefix="$HOME/ffmpeg_build" \
   --bindir="$HOME/bin" \
-  --extra-cflags="-I$HOME/bin/include" \
-  --extra-ldflags="-L$HOME/bin/lib" \
+  --extra-cflags="-I$HOME/ffmpeg_build/include" \
+  --extra-ldflags="-L$HOME/ffmpeg_build/lib" \
   --extra-cflags="-I/opt/intel/mediasdk/include" \
   --extra-ldflags="-L/opt/intel/mediasdk/lib" \
   --extra-ldflags="-L/opt/intel/mediasdk/plugins" \
@@ -564,12 +482,12 @@ PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig:/opt/in
   --enable-libvpx \
   --enable-libdrm \
   --enable-gpl \
-  --cpu=native \
+  --enable-runtime-cpudetect \
   --enable-libfdk-aac \
   --enable-libx264 \
   --enable-libx265 \
   --enable-openssl \
-  --extra-libs=-lpthread \
+  --extra-libs="-lpthread -lm -lz -ldl" \
   --enable-nonfree 
 PATH="$HOME/bin:$PATH" make -j$(nproc) 
 make -j$(nproc) install 
@@ -615,23 +533,6 @@ See the help documentation for each encoder in question:
 ffmpeg -hide_banner -h encoder='encoder name'
 ```
 
-**Test the encoders;**
-
-Using GNU parallel, we will encode some mp4 files (4k H.264 test samples, 40 minutes each, AAC 6-channel audio) on the ~/src path on the system to VP8 and HEVC respectively using the examples below. Note that I've tuned the encoders to suit my use-cases, and re-scaling to 1080p is enabled. Adjust as necessary (and compensate as needed if `~/bin` is not on the system path).
-
-**To VP8, launching 10 encode jobs simultaneously:**
-
-```
-parallel -j 10 --verbose 'ffmpeg -loglevel debug -threads 4 -hwaccel vaapi -i "{}"  -vaapi_device /dev/dri/renderD129 -c:v vp8_vaapi -loop_filter_level:v 63 -loop_filter_sharpness:v 15 -b:v 4500k -maxrate:v 7500k -vf 'format=nv12,hwupload,scale_vaapi=w=1920:h=1080' -c:a libvorbis -b:a 384k -ac 6 -f webm "{.}.webm"' ::: $(find . -type f -name '*.mp4')
-```
-
-**To HEVC with GNU Parallel:**
-
-To HEVC Main Profile, launching 10 encode jobs simultaneously:
-
-```
-parallel -j 4 --verbose 'ffmpeg -loglevel debug -threads 4 -hwaccel vaapi -i "{}"  -vaapi_device /dev/dri/renderD129 -c:v hevc_vaapi -qp:v 19 -b:v 2100k -maxrate:v 3500k -vf 'format=nv12,hwupload,scale_vaapi=w=1920:h=1080' -c:a libvorbis -b:a 384k -ac 6 -f matroska "{.}.mkv"' ::: $(find . -type f -name '*.mp4')
-```
 
 **FFmpeg QSV encoder usage notes:**
 
