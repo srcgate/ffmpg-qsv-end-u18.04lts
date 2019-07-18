@@ -8,7 +8,7 @@ Build platform: Ubuntu 18.04LTS
 
 **Install baseline dependencies first (inclusive of OpenCL headers+)**
 
-`sudo apt-get -y install autoconf automake build-essential libass-dev libtool pkg-config texinfo zlib1g-dev libva-dev cmake mercurial libdrm-dev libvorbis-dev libogg-dev git libx11-dev libperl-dev libpciaccess-dev libpciaccess0 xorg-dev intel-gpu-tools opencl-headers libwayland-dev xutils-dev ocl-icd-* libssl-dev `
+`sudo apt-get -y install autoconf automake build-essential libass-dev libtool pkg-config texinfo zlib1g-dev libva-dev cmake mercurial libdrm-dev libvorbis-dev libogg-dev git libx11-dev libperl-dev libpciaccess-dev libpciaccess0 xorg-dev intel-gpu-tools opencl-headers libwayland-dev xutils-dev ocl-icd-* libssl-dev`
 
 Then add the Oibaf PPA, needed to install the latest development headers for libva:
 
@@ -29,6 +29,8 @@ git config --global user.email "your@email.com"
 Then proceed.
 
 **To address linker problems down the line with Ubuntu 18.04LTS:**
+
+**Note:** This can be skipped as the bug has been fixed upstream.
 
 Referring to this: https://forum.openframeworks.cc/t/ubuntu-unable-to-compile-missing-glx-mesa/29367/2
 
@@ -177,6 +179,8 @@ Put that in `/etc/environment`.
 
 **Fallback for the Intel Opensource VAAPI driver:**
 
+**Again, this can be skipped safely as the PPA has the latest code:**
+
  1. [cmrt](https://github.com/01org/cmrt):
 
 This is the C for Media Runtime GPU Kernel Manager for Intel G45 & HD Graphics family. 
@@ -281,13 +285,13 @@ Then proceed.
 **Build dependencies:**
 
 ```
-sudo apt-get install ccache flex bison cmake g++ git patch zlib1g-dev autoconf xutils-dev libtool pkg-config libpciaccess-dev libz-dev
+sudo apt-get install ccache flex bison cmake g++ git patch zlib1g-dev autoconf xutils-dev libtool pkg-config libpciaccess-dev libz-dev clinfo
 ```
 
 
 **Testing:**
 
-Use clinfo and confirm that the ICD is detected.
+Use `clinfo` and confirm that the ICD is detected.
 
 Optionally, run [Luxmark](http://www.luxmark.info/) and confirm that Intel Neo's OpenCL platform is detected and usable.
 
@@ -384,7 +388,7 @@ make -j$(nproc) distclean
 cd ~/ffmpeg_sources
 git clone http://git.videolan.org/git/x264.git -b stable
 cd x264/
-PATH="$HOME/bin:$PATH" ./configure --prefix="$HOME/ffmpeg_build" --enable-static
+PATH="$HOME/bin:$PATH" ./configure --prefix="$HOME/ffmpeg_build" --enable-static --enable-pic --bit-depth=all
 PATH="$HOME/bin:$PATH" make -j$(nproc) VERBOSE=1
 make -j$(nproc) install VERBOSE=1
 make -j$(nproc) distclean
