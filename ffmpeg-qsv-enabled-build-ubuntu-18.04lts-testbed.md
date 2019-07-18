@@ -491,6 +491,7 @@ PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig:/opt/in
   --enable-libx264 \
   --enable-libx265 \
   --enable-openssl \
+  --enable-pic \
   --extra-libs="-lpthread -lm -lz -ldl" \
   --enable-nonfree 
 PATH="$HOME/bin:$PATH" make -j$(nproc) 
@@ -544,19 +545,19 @@ I provide an example below that demonstrates the use of a complex filter chain w
 
 **Complex Filter chain usage for variant stream encoding with Intel's QSV encoders:**
 
-Take the example snippet below, which takes the safest (and not necessarily the fastest route), utilizing a hybrid encoder approach (partial hwaccel with significant processor load):
+Take the example snippet below:
 
 ```
-ffmpeg -re -stream_loop -1 -threads n -loglevel debug -filter_complex_threads n \
+ffmpeg -re -stream_loop -1 -threads n -loglevel debug \
 -init_hw_device qsv=qsv:hw -hwaccel qsv -filter_hw_device qsv \
 -i 'udp://$stream_url:$port?fifo_size=9000000' \
 -filter_complex "[0:v]hwupload=extra_hw_frames=10,vpp_qsv=deinterlace=2,split=6[s0][s1][s2][s3][s4][s5]; \
-[s0]hwupload=extra_hw_frames=10,scale_qsv=1920:1080:format=nv12[v0]; \
-[s1]hwupload=extra_hw_frames=10,scale_qsv=1280:720:format=nv12[v1];
-[s2]hwupload=extra_hw_frames=10,scale_qsv=960:540:format=nv12[v2];
-[s3]hwupload=extra_hw_frames=10,scale_qsv=842:480:format=nv12[v3];
-[s4]hwupload=extra_hw_frames=10,scale_qsv=480:360:format=nv12[v4];
-[s5]hwupload=extra_hw_frames=10,scale_qsv=426:240:format=nv12[v5]" \
+[s0]scale_qsv=1920:1080:format=nv12[v0]; \
+[s1]scale_qsv=1280:720:format=nv12[v1];
+[s2]scale_qsv=960:540:format=nv12[v2];
+[s3]scale_qsv=842:480:format=nv12[v3];
+[s4]scale_qsv=480:360:format=nv12[v4];
+[s5]scale_qsv=426:240:format=nv12[v5]" \
 -b:v:0 2250k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
 -b:v:1 1750k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
 -b:v:2 1000k -c:v h264_qsv -a53cc 1 -rdo 1 -pic_timing_sei 1 -recovery_point_sei 1 -profile high -aud 1 \
@@ -599,9 +600,9 @@ The mapping is needed because the [tee muxer](https://www.ffmpeg.org/ffmpeg-form
 3.  We split the incoming streams into six, and in so doing:
     
 
-(a). Allocate a single thread to each filter complex chain. Thus the value `n` set for `-filter_complex_threads` should match the number of `split=n` value.
+(a). Create the complex filter chain, as shown above. Note the syntax of operations: Common operations, such as deinterlace should only be done once, with the output of the same split into inputs for the preceding filter(s).
 
-(b). Allocate the total thread count for FFmpeg to the value specified above. This ensures that each encoder is fed only through a single thread, the optimal value for hardware-accelerated encoding.
+(b). Allocate the total thread count for FFmpeg to a value less than four. This ensures that each encoder is fed only sufficient threads not exceeding the point of diminishing returns.
 
 The following notes about thread allocation in FFmpeg applies doubly so:
 
@@ -636,7 +637,7 @@ Conversion failed!
 (b). When initializing the encoder, the hardware device node for [libmfx](https://trac.ffmpeg.org/wiki/Hardware/QuickSync) _must_ be initialized as shown:
 
 ```
--init_hw_device qsv=qsv:MFX_IMPL_hw_any -hwaccel qsv -filter_hw_device qsv
+-init_hw_device qsv=qsv:hw -hwaccel qsv -filter_hw_device qsv
 ```
 
 That ensures that the proper hardware accelerator node (`qsv`) is initialized with the proper device context (`-init_hw_device qsv=qsv:hw`) with device nodes for a hardware accelerator implementation being inherited `(-hwaccel qsv`) with an appropriate filter device (`-filter_hw_device qsv`) are initialized for resource allocation by the `hwupload` filter, the `vpp_qsv` post-processor (needed for advanced deinterlacing) and the `scale_vpp` filter (needed for texture format conversion to nv12, otherwise the encoder will fail).
@@ -705,14 +706,16 @@ So, what has changed here? For one:
 
 (a). We have selected an appropriate QSV-based decoder based on the video codec type in the ingest feed (h264), assigned as `-c:v h264_qsv` and the `-hwaccel qsv` as the hwaccel before declaring the input (`-i`). If the ingest feed is MPEG-2, select the MPEG decoder (`-c:v mpeg2_qsv`) instead.
 
-(b). We have dropped the manual H/W init (`-init_hw_device qsv=qsv:MFX_IMPL_hw_any -hwaccel qsv -filter_hw_device qsv`) and the hwupload video filter.
+(b). We have dropped the manual H/W init (`-init_hw_device qsv=qsv:hw -hwaccel qsv -filter_hw_device qsv`) and the hwupload video filter.
 
 4.  The open source iMSDK has a frame encoder limit of 1000 for the HEVC-based encoder, and as such, the HEVC encoder components should only be used for evaluation purposes. These that require these functions should consult the [proprietary licensed SDK](https://software.intel.com/en-us/media-sdk). To specify the frame limit in ffmpeg, use the `-vframes n` option, where `n` is an integer.
     
 5.  The `iHD` libva driver also provides similar VAAPI functionality as the opensource `i965` driver, with a few discrepancies:
     
 
-(a). It does not offer encode entry points for VP8 and VP9 codecs (yet). (b). As mentioned above, HEVC encoding is for evaluation purposes only and will limit the encode to a mere 1000 frames.
+(a). It does not offer encode entry points for VP8 and VP9 codecs (yet). 
+
+(b). As mentioned above, HEVC encoding is for evaluation purposes only and will limit the encode to a mere 1000 frames.
 
 See the VAAPI features enabled with this iHD driver:
 
