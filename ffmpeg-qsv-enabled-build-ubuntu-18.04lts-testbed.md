@@ -427,8 +427,9 @@ cd ~/ffmpeg_sources
 git clone https://github.com/webmproject/libvpx
 cd libvpx
 ./configure --prefix="$HOME/ffmpeg_build" --enable-runtime-cpu-detect --cpu=native --as=nasm --enable-vp8 --enable-vp9 \
---enable-shared --enable-static --enable-postproc-visualizer --enable-multi-res-encoding --enable-postproc --enable-vp9-postproc \
---enable-vp9-highbitdepth --enable-pic --enable-webm-io --enable-libyuv --enable-internal-stats --enable-better-hw-compatibility  
+--enable-postproc-visualizer --disable-examples --disable-unit-tests --enable-static --disable-shared \
+--enable-multi-res-encoding --enable-postproc --enable-vp9-postproc \
+--enable-vp9-highbitdepth --enable-pic --enable-webm-io --enable-libyuv 
 time make -j$(nproc)
 time make -j$(nproc) install
 time make clean -j$(nproc)
@@ -439,14 +440,28 @@ time make distclean
 
 ```
 cd ~/ffmpeg_sources
-git clone https://github.com/xiph/vorbis
+git clone https://git.xiph.org/vorbis.git
 cd vorbis
-./autogen.sh -ivf
+autoreconf -ivf
 ./configure --enable-static --prefix="$HOME/ffmpeg_build"
 time make -j$(nproc)
 time make -j$(nproc) install
 time make clean -j$(nproc)
 time make distclean
+```
+
+**(g). Build SDL**
+
+```sh
+cd ~/ffmpeg_sources
+hg clone hg clone http://hg.libsdl.org/SDL
+cd ~/ffmpeg_sources/SDL
+./autogen.sh -ivf
+PATH="$HOME/bin:$PATH" ./configure --prefix="$HOME/ffmpeg_build" --with-x --with-pic=yes \
+--disable-alsatest --enable-pthreads --enable-static=yes --enable-shared=no
+make -j$(nproc) VERBOSE=1
+make -j$(nproc) install VERBOSE=1
+make -j$(nproc) clean VERBOSE=1
 ```
 
 **(g). Build FFmpeg (with OpenCL enabled):**
@@ -471,6 +486,7 @@ git clone https://github.com/FFmpeg/FFmpeg -b master
 cd FFmpeg
 PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig:/opt/intel/mediasdk/lib/pkgconfig" ./configure \
   --pkg-config-flags="--static" \
+  --enable-static --disable-shared \
   --prefix="$HOME/ffmpeg_build" \
   --bindir="$HOME/bin" \
   --extra-cflags="-I$HOME/ffmpeg_build/include" \
