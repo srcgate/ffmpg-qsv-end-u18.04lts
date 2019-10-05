@@ -275,7 +275,7 @@ sudo apt-get update
 
 Then install the packages:
 
-    sudo apt install intel-*
+`sudo apt install intel-*`
 
 Then proceed.
 
@@ -464,7 +464,7 @@ make -j$(nproc) install VERBOSE=1
 make -j$(nproc) clean VERBOSE=1
 ```
 
-**(g). Build FFmpeg (with OpenCL enabled):**
+**(h). Build FFmpeg (with OpenCL enabled):**
 
 Notes on API support:
 
