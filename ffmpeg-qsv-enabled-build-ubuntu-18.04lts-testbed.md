@@ -454,7 +454,7 @@ time make distclean
 
 ```sh
 cd ~/ffmpeg_sources
-hg clone hg clone http://hg.libsdl.org/SDL
+hg clone http://hg.libsdl.org/SDL
 cd ~/ffmpeg_sources/SDL
 ./autogen.sh -ivf
 PATH="$HOME/bin:$PATH" ./configure --prefix="$HOME/ffmpeg_build" --with-x --with-pic=yes \
