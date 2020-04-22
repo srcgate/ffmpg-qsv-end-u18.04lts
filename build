@@ -1,0 +1,86 @@
+cd ~/ffmpeg_sources
+git clone https://github.com/FFmpeg/FFmpeg -b master
+cd FFmpeg
+PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig:/opt/intel/mediasdk/lib/pkgconfig" ./configure \
+  --pkg-config-flags="--static" \
+  --enable-static --disable-shared \
+  --prefix="$HOME/ffmpeg_build" \
+  --bindir="$HOME/bin" \
+  --extra-cflags="-I$HOME/ffmpeg_build/include" \
+  --extra-ldflags="-L$HOME/ffmpeg_build/lib" \
+  --extra-cflags="-I/opt/intel/mediasdk/include" \
+  --extra-ldflags="-L/opt/intel/mediasdk/lib" \
+  --extra-ldflags="-L/opt/intel/mediasdk/plugins" \
+  --enable-libmfx \
+  --enable-vaapi \
+  --enable-opencl \
+  --disable-debug \
+  --enable-libvorbis \
+  --enable-libvpx \
+  --enable-libdrm \
+  --enable-gpl \
+  --enable-runtime-cpudetect \
+  --enable-libfdk-aac \
+  --enable-libx264 \
+  --enable-libx265 \
+  --enable-openssl \
+  --enable-pic \
+  --extra-libs="-lpthread -lm -lz -ldl" \
+  --enable-nonfree \
+  --enable-libass \
+  --extra-libs=-lpthread \
+  --enable-libxcb \
+  --enable-libpulse \
+  --enable-nonfree \
+  --enable-small  \
+  --enable-chromaprint \
+  --enable-frei0r \
+  --enable-gmp \
+  --enable-ladspa \
+  --enable-libaom \
+  --enable-libcaca \
+  --enable-libcdio \
+  --enable-libcodec2 \
+  --enable-libfontconfig \
+  --enable-libfreetype \
+  --enable-libfribidi \
+  --enable-libgme \
+  --enable-libgsm \
+  --enable-libjack \
+  --enable-libmodplug \
+  --enable-libmp3lame \
+  --enable-libopencore-amrnb \
+  --enable-libopencore-amrwb \
+  --enable-libopencore-amrwb \
+  --enable-libopenjpeg \
+  --enable-libopenmpt \
+  --enable-libopus \
+  --enable-librubberband \
+  --enable-libshine \
+  --enable-libsnappy \
+  --enable-libsoxr \
+  --enable-libspeex \
+  --enable-libssh \
+  --enable-libtheora \
+  --enable-libtwolame \
+  --enable-libvo-amrwbenc \
+  --enable-libwavpack \
+  --enable-libwebp \
+  --enable-libxvid \
+  --enable-libzvbi \
+  --enable-lv2 \
+  --enable-openal \
+  --enable-opengl \
+  --enable-version3 \
+  --enable-muxer=rtsp \
+  --enable-protocol=rtp \
+  --enable-demuxer=rtsp \
+  --enable-bzlib \
+  --enable-frei0r \
+  --enable-libmp3lame \
+  --enable-libtheora \
+  --enable-static
+PATH="$HOME/bin:$PATH" make -j$(nproc) 
+make -j$(nproc) install 
+make -j$(nproc) distclean 
+hash -r
