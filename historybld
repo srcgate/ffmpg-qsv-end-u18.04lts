@@ -16,8 +16,8 @@ sudo apt update && sudo apt -y upgrade && sudo apt -y dist-upgrade
 sudo apt-get -y install autoconf automake build-essential libass-dev libtool pkg-config texinfo zlib1g-dev libva-dev cmake mercurial libdrm-dev libvorbis-dev libogg-dev git libx11-dev libperl-dev libpciaccess-dev libpciaccess0 xorg-dev intel-gpu-tools opencl-headers libwayland-dev xutils-dev ocl-icd-* libssl-dev
 sudo add-apt-repository ppa:oibaf/graphics-drivers
 sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get -y dist-upgrade
-git config --global user.name "Defansiptv Defansiptv"
-git config --global user.email "sporcpu@gmail.com"
+git config --global user.name "Dfns Dfns"
+git config --global user.email "xxxxxx@gmail.com"
 sudo ln -s /usr/lib/x86_64-linux-gnu/libGLX_mesa.so.0 /usr/lib/x86_64-linux-gnu/libGLX_mesa.so
 cd
 ls
