@@ -1,0 +1,239 @@
+ifconfig
+ls -la /dev/dri
+sudo apt install intel-gpu-tools
+sudo intel_gpu_top
+apt-get update
+uname -a
+lsblk
+cd ~/
+mkdir ~/ffmpeg_sources
+sudo apt-get -y update && apt-get dist-upgrade -y
+sudo apt-get -y install autoconf automake build-essential libass-dev libtool pkg-config texinfo zlib1g-dev cmake mercurial
+ls
+mkdir -p ~/ffmpeg_sources/libaom &&   cd ~/ffmpeg_sources/libaom &&   git clone https://aomedia.googlesource.com/aom &&   cmake ./aom &&   make &&   sudo make install
+cd
+sudo apt update && sudo apt -y upgrade && sudo apt -y dist-upgrade
+sudo apt-get -y install autoconf automake build-essential libass-dev libtool pkg-config texinfo zlib1g-dev libva-dev cmake mercurial libdrm-dev libvorbis-dev libogg-dev git libx11-dev libperl-dev libpciaccess-dev libpciaccess0 xorg-dev intel-gpu-tools opencl-headers libwayland-dev xutils-dev ocl-icd-* libssl-dev
+sudo add-apt-repository ppa:oibaf/graphics-drivers
+sudo apt-get update && sudo apt-get -y upgrade && sudo apt-get -y dist-upgrade
+git config --global user.name "Defansiptv Defansiptv"
+git config --global user.email "sporcpu@gmail.com"
+sudo ln -s /usr/lib/x86_64-linux-gnu/libGLX_mesa.so.0 /usr/lib/x86_64-linux-gnu/libGLX_mesa.so
+cd
+ls
+rm -rf ffmpeg_sources/ install.py x.sh
+mkdir -p ~/vaapi
+mkdir -p ~/ffmpeg_build
+mkdir -p ~/ffmpeg_sources
+mkdir -p ~/bin
+cd ~/vaapi
+git clone https://anongit.freedesktop.org/git/mesa/drm.git libdrm
+cd libdrm
+./autogen.sh --prefix=/usr --enable-udev
+ls
+nano README.rst
+ninja -C builddir/ install
+apt install ninja-build
+time make -j$(nproc) VERBOSE=1
+./autogen.sh --prefix=/usr --enable-udev
+ls
+cd
+rm -rf vaapi/
+mkdir vaapi
+ls
+cd vaapi/
+cd
+rm -rf vaapi/
+mkdir -p ~/vaapi
+cd ~/vaapi
+git clone https://anongit.freedesktop.org/git/mesa/drm.git libdrm
+ls
+cd libdrm/i
+cd libdrm/
+ls
+./configure
+sudo apt-get build-dep libdrm mesa xserver-xorg-video-ati xorg-server
+sudo apt-get install git llvm-3.4-dev libelf-dev linux-headers-`uname -r` build-essential
+sudo apt-get install llvm
+sudo apt-get install llvm-dev
+sudo apt-get install libelf-dev
+sudo ln -s /usr/lib/x86_64-linux-gnu/libGLX_mesa.so.0 /usr/lib/x86_64-linux-gnu/libGLX_mesa.so
+sudo apt-get install libdrm
+ls
+sudo apt install libdrm-dev
+cd ~/vaapi
+git clone https://github.com/01org/libva
+cd libva
+./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
+time make -j$(nproc) VERBOSE=1
+sudo make -j$(nproc) install
+sudo ldconfig -vvvv
+mkdir -p ~/vaapi/workspace
+cd ~/vaapi/workspace
+git clone https://github.com/intel/gmmlib
+mkdir -p build
+cd build
+cmake -DCMAKE_BUILD_TYPE= Release ../gmmlib
+make -j$(nproc)
+sudo make -j$(nproc) install
+cd ~/vaapi/workspace
+git clone https://github.com/intel/media-driver
+cd media-driver
+git submodule init
+git pull
+mkdir -p ~/vaapi/workspace/build_media
+cd ~/vaapi/workspace/build_media
+ls
+cmake ../media-driver -DBS_DIR_GMMLIB=$PWD/../gmmlib/Source/GmmLib/ -DBS_DIR_COMMON=$PWD/../gmmlib/Source/Common/ -DBS_DIR_INC=$PWD/../gmmlib/Source/inc/ -DBS_DIR_MEDIA=$PWD/../media-driver -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=/usr/lib/x86_64-linux-gnu -DINSTALL_DRIVER_SYSCONF=OFF -DLIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+time make -j$(nproc) VERBOSE=1
+sudo make -j$(nproc) install VERBOSE=1
+sudo usermod -a -G video $USER
+LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+LIBVA_DRIVER_NAME=iHD
+nano /etc/environment
+cd ~/vaapi
+git clone https://github.com/01org/cmrt
+cd cmrt
+./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
+time make -j$(nproc) VERBOSE=1
+sudo make -j$(nproc) install
+cd ~/vaapi
+git clone https://github.com/01org/intel-hybrid-driver
+cd intel-hybrid-driver
+./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
+time make -j$(nproc) VERBOSE=1
+sudo make -j$(nproc) install
+cd ~/vaapi
+git clone https://github.com/01org/intel-vaapi-driver
+cd intel-vaapi-driver
+./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu --enable-hybrid-codec
+time make -j$(nproc) VERBOSE=1
+sudo make -j$(nproc) install
+cd ~/vaapi
+git clone https://github.com/intel/intel-vaapi-driver
+cd intel-vaapi-driver
+./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
+time make -j$(nproc) VERBOSE=1
+sudo make -j$(nproc) install
+cd ~/vaapi
+git clone https://github.com/intel/libva-utils
+cd libva-utils
+./autogen.sh --prefix=/usr --libdir=/usr/lib/x86_64-linux-gnu
+time make -j$(nproc) VERBOSE=1
+sudo make -j$(nproc) install
+reboot
+sudo add-apt-repository ppa:intel-opencl/intel-opencl
+sudo apt-get update
+sudo apt install intel-*
+sudo apt-get install ccache flex bison cmake g++ git patch zlib1g-dev autoconf xutils-dev libtool pkg-config libpciaccess-dev libz-dev clinfo
+clinfo
+sudo apt install freeglut3*
+cd ~/vaapi
+git clone https://github.com/Intel-Media-SDK/MediaSDK msdk
+cd msdk
+git submodule init
+git pull
+mkdir -p ~/vaapi/build_msdk
+cd ~/vaapi/build_msdk
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_WAYLAND=ON -DENABLE_X11_DRI3=ON -DENABLE_OPENCL=ON  ../msdk
+time make -j$(nproc) VERBOSE=1
+sudo make install -j$(nproc) VERBOSE=1
+sudo nano /etc/ld.so.conf.d/imsdk.conf
+sudo ldconfig -vvvv
+cd ~/ffmpeg_sources
+wget wget http://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.gz
+tar xzvf nasm-2.14.02.tar.gz
+cd nasm-2.14.02
+./configure --prefix="$HOME/ffmpeg_build" --bindir="$HOME/bin"
+make -j$(nproc) VERBOSE=1
+make -j$(nproc) install
+ake -j$(nproc) distclean
+make -j$(nproc) distclean
+cd ~/ffmpeg_sources
+git clone http://git.videolan.org/git/x264.git
+cd x264/
+PATH="$HOME/bin:$PATH" ./configure --prefix="$HOME/ffmpeg_build" --enable-static --enable-pic --bit-depth=all
+PATH="$HOME/bin:$PATH" make -j$(nproc) VERBOSE=1
+make -j$(nproc) install VERBOSE=1
+make -j$(nproc) distclean
+cd ~/ffmpeg_sources
+hg clone https://bitbucket.org/multicoreware/x265
+cd ~/ffmpeg_sources/x265/build/linux
+PATH="$HOME/bin:$PATH" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$HOME/ffmpeg_build" -DENABLE_SHARED:bool=off ../../source
+make -j$(nproc) VERBOSE=1
+make -j$(nproc) install VERBOSE=1
+make -j$(nproc) clean VERBOSE=1
+cd ~/ffmpeg_sources
+git clone https://github.com/mstorsjo/fdk-aac
+cd fdk-aac
+autoreconf -fiv
+./configure --prefix="$HOME/ffmpeg_build" --disable-shared
+make -j$(nproc)
+make -j$(nproc) install
+make -j$(nproc) distclean
+cd ~/ffmpeg_sources
+git clone https://github.com/webmproject/libvpx
+cd libvpx
+./configure --prefix="$HOME/ffmpeg_build" --enable-runtime-cpu-detect --cpu=native --as=nasm --enable-vp8 --enable-vp9 --enable-postproc-visualizer --disable-examples --disable-unit-tests --enable-static --disable-shared --enable-multi-res-encoding --enable-postproc --enable-vp9-postproc --enable-vp9-highbitdepth --enable-pic --enable-webm-io --enable-libyuv
+time make -j$(nproc)
+time make -j$(nproc) install
+time make clean -j$(nproc)
+time make distclean
+cd ~/ffmpeg_sources
+git clone https://git.xiph.org/vorbis.git
+cd vorbis
+autoreconf -ivf
+./configure --enable-static --prefix="$HOME/ffmpeg_build"
+time make -j$(nproc)
+time make -j$(nproc) install
+time make clean -j$(nproc)
+time make distclean
+cd ~/ffmpeg_sources
+hg clone http://hg.libsdl.org/SDL
+cd ~/ffmpeg_sources/SDL
+./autogen.sh -ivf
+PATH="$HOME/bin:$PATH" ./configure --prefix="$HOME/ffmpeg_build" --with-x --with-pic=yes --disable-alsatest --enable-pthreads --enable-static=yes --enable-shared=no
+make -j$(nproc) VERBOSE=1
+make -j$(nproc) install VERBOSE=1
+make -j$(nproc) clean VERBOSE=1
+./configure --enable-gpl --enable-version3 --disable-static --enable-shared --enable-small --enable-avisynth --enable-chromaprint --enable-frei0r --enable-gmp --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libjack --enable-libmodplug --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librsvg --enable-librubberband --enable-librtmp --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libssh --enable-libtesseract --enable-libtheora --enable-libtwolame --enable-libv4l2 --enable-libvo-amrwbenc --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libxml2 --enable-libzmq --enable-libzvbi --enable-lv2 --enable-libmysofa --enable-openal --enable-opencl --enable-opengl --enable-libdrm --enable-nonfree --enable-libfdk-aac --enable-libbluray
+cd
+mkdir -p ~/ffmpeg_sources/libaom
+cd ~/ffmpeg_sources/libaom
+git clone https://aomedia.googlesource.com/aom
+cmake ./aom
+make
+sudo make install
+cd
+nano cc.sh
+chmod +x cc.sh
+./cc.sh
+apt-get install bzlib
+sudo apt-get install python-dev
+sudo apt-get install python-bzutils
+sudo apt-get install libbz2-dev
+./cc.sh
+ls
+cd ~/ffmpeg_sources
+ls
+rm -rf FFmpeg/
+cd
+ls
+./cc.sh
+cd
+ls
+cd bin/
+ls
+./ffmpeg -v
+./ffmpeg --help
+./ffmpeg -?
+./ffmpeg -L
+sudo apt-get install libbz2-1.0 libbz2-dev libbz2-ocaml libbz2-ocaml-dev
+./ffmpeg -L
+cd bin/
+ls
+./ffmpeg -L
+ls
+cd bin/
+ls
+./ffmpeg
