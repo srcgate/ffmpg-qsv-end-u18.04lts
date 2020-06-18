@@ -28,3 +28,7 @@ Regarding your question above, once you have a working FFmpeg with --enable-libx
 ffmpeg -i manifest.mpd -codec copy out.mp4
 
 Note: I use -codec copy above to avoid transcoding of actual video and audio.
+
+
+--enable-demuxer=dash 
+--enable-libxml2
