@@ -36,7 +36,7 @@ Note: I use -codec copy above to avoid transcoding of actual video and audio.
 cd ~/ffmpeg_sources
 wget ftp://xmlsoft.org/libxml2/libxml2-2.9.9.tar.gz
 tar xvzf libxml2-2.9.9.tar.gz
-cd libxml2-2.9.9.tar.gz
+cd libxml2-2.9.9
 PATH="$HOME/bin:$PATH" ./configure --prefix="$HOME/ffmpeg_build" --enable-static --with-history
 PATH="$HOME/bin:$PATH" make -j$(nproc) VERBOSE=1
 make -j$(nproc) install VERBOSE=1
