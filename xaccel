@@ -1,0 +1,108 @@
+QUICK SYNC
+------------
+
+apt-get update
+apt-get install systemd libdrm2 libxext* libxfixes* libpciaccess* -y
+
+Install Intel Media SDK and 4.18.20 kernel.
+
+wget ftp://ftp.xaccel-codec.com/install/intel-mediasdk-19.2.1.tar.xz
+tar -xvf intel-mediasdk-19.2.1.tar.xz
+cd intel-mediasdk-19.2.1/
+bash ./install.sh
+reboot
+
+Install X Acceleration Codec software.
+
+wget ftp://ftp.xaccel-codec.com/releases/xaccel-codec-3.3.4~+qsv.sh
+bash ./xaccel-codec-3.3.4~+qsv.sh -i
+
+
+NVENC
+------------
+
+
+X Acceleration Codec NVENC Version Installation Guide
+
+    Important
+    Installation for Fedora, CentOS and RHEL
+    Installation for Ubuntu and Debian
+    Contact
+
+Important
+
+    Nvidia GPU with NVDEC and NVENC chip supports is required. You can found more details on here.
+    PCIe x1/x4 speed slots has insufficient PCIe bandwidth and it will huge decrease the GPU transcoding performance.
+    Dual channel memory motherboard supports maximum 2 GPUs only due to the insufficient memory bandwidth problem.
+    Don't use any mining motherboard due to the insufficient PCIe bandwidth problem.
+    Don't use any mining GPU due to they may not has NVDEC and NVENC chips inside.
+    Make sure you are the root user before the installation.
+
+ 
+Installation for Fedora, CentOS and RHEL
+
+    Install the development tools.
+
+    yum groupinstall "Development tools" -y
+
+    Install the 4.x kernel.
+
+    wget ftp://ftp.xaccel-codec.com/install/intel-mediasdk-19.2.1.tar.xz
+    tar -xvf intel-mediasdk-19.2.1.tar.xz
+    cd intel-mediasdk-19.2.1
+    bash ./install.sh
+    reboot
+
+    Disable the Nvidia nouveau open source driver.
+
+    echo "blacklist nouveau" > /etc/modprobe.d/nvidia-installer-disable-nouveau.conf
+    echo "options nouveau modeset=0" >> /etc/modprobe.d/nvidia-installer-disable-nouveau.conf
+    dracut -f
+    reboot
+
+    Install the Nvidia driver.
+
+    systemctl stop gdm >/dev/null 2>&1
+    nvidia-uninstall --silent
+    wget http://us.download.nvidia.com/XFree86/Linux-x86_64/435.21/NVIDIA-Linux-x86_64-435.21.run
+    bash ./NVIDIA-Linux-x86_64-435.21.run --silent --install-libglvnd
+
+    Install the X Acceleration Codec.
+
+    wget ftp://ftp.xaccel-codec.com/releases/xaccel-codec-3.3.4~+nvenc.sh
+    bash ./xaccel-codec-3.3.4~+nvenc.sh -i
+
+    Open the browser and enter http://server for login to the panel. default password is admin. Go to the About > License page for activate the license.
+
+Installation for Ubuntu and Debian
+
+    Install the development tools.
+
+    apt-get update
+    apt-get install systemd build-essential -y
+    apt-get purge nvidia-* -y
+    apt-get autoremove -y
+
+    Disable the Nvidia nouveau open source driver.
+
+    echo "blacklist nouveau" > /etc/modprobe.d/nvidia-installer-disable-nouveau.conf
+    echo "options nouveau modeset=0" >> /etc/modprobe.d/nvidia-installer-disable-nouveau.conf
+    update-initramfs -u
+    reboot
+
+    Install the Nvidia driver.
+
+    service lightdm stop
+    nvidia-uninstall --silent
+    wget http://us.download.nvidia.com/XFree86/Linux-x86_64/435.21/NVIDIA-Linux-x86_64-435.21.run
+    bash ./NVIDIA-Linux-x86_64-435.21.run --silent --install-libglvnd
+
+    Install the X Acceleration Codec.
+
+    wget ftp://ftp.xaccel-codec.com/releases/xaccel-codec-3.3.4~+nvenc.sh
+    bash ./xaccel-codec-3.3.4~+nvenc.sh -i
+
+    Open the browser and enter http://IP for login to the panel. default password is admin. Go to the About > License page for activate the license.
+
+
+
