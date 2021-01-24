@@ -1,0 +1,15 @@
+ffmpeg version N-92517-gd0f5942-StreamCreed  Copyright (c) 2000-2018 the FFmpeg developers
+  built with gcc 6.5.0 (Ubuntu 6.5.0-2ubuntu1~14.04.1) 20181026
+  configuration: --prefix=/root/FFmpeg/target --extra-cflags=-I/root/FFmpeg/target/include --extra-ldflags='-L/root/FFmpeg/target/lib -Wl,-Bstatic -lcrypto -lssl -Wl,-Bdynamic' --extra-version=StreamCreed  --disable-debug --disable-shared --enable-libx265 --enable-static --extra-cflags=--static --disable-ffplay --disable-doc --enable-gpl --enable-pthreads --enable-postproc --enable-libass --enable-gray --enable-runtime-cpudetect --enable-libfreetype --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-gnutls --enable-libx264 --enable-libxvid --enable-bzlib --enable-fontconfig --enable-zlib --enable-version3 --enable-libvpx --enable-libxavs --enable-nvenc --enable-ffnvcodec --enable-cuvid --disable-autodetect --disable-alsa --disable-indev=alsa --disable-outdev=alsa --enable-librtmp --extra-libs='-lsupc++ -lgmp -lz -lunistring -lpthread -lm -lrt -ldl'
+  libavutil      56. 23.101 / 56. 23.101
+  libavcodec     58. 39.100 / 58. 39.100
+  libavformat    58. 22.100 / 58. 22.100
+  libavdevice    58.  6.100 / 58.  6.100
+  libavfilter     7. 46.100 /  7. 46.100
+  libswscale      5.  4.100 /  5.  4.100
+  libswresample   3.  4.100 /  3.  4.100
+  libpostproc    55.  4.100 / 55.  4.100
+Hyper fast Audio and Video encoder
+usage: ffmpeg [options] [[infile options] -i infile]... {[outfile options] outfile}...
+
+Use -h to get full help or, even better, run 'man ffmpeg'
